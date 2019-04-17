@@ -1,0 +1,4 @@
+include ':datawatcher-annotation', ':datawatcher-processor', ':datawatcher-api', ':datawatcher-plugin', ':sub'
+include ':app', ':sub'
+project(':app').projectDir = new File('sample/app')
+project(':sub').projectDir = new File('sample/sub')

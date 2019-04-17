@@ -1,0 +1,39 @@
+apply plugin: 'groovy'
+apply plugin: 'maven'
+
+
+dependencies {
+    compileOnly 'com.android.tools.build:gradle:3.3.2'
+    //gradle sdk
+    compileOnly gradleApi()
+    //groovy sdk
+    compileOnly localGroovy()
+
+    implementation 'com.android.tools.build:gradle-api:2.3.0'
+    implementation 'org.javassist:javassist:3.24.1-GA'
+}
+
+
+repositories {
+    mavenCentral()
+}
+
+
+//group和version
+group = 'club.fdawei.datawatcher'
+version = '1.0.0'
+
+//打包到本地或者远程Maven库
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            //提交到远程服务器：
+            // repository(url: "http://www.xxx.com/repos") {
+            //    authentication(userName: "admin", password: "admin")
+            // }
+
+            //提交到本地仓库
+            repository(url: uri("${local_maven_repo}"))
+        }
+    }
+}
