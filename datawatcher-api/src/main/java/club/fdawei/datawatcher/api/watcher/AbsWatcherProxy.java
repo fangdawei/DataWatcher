@@ -7,8 +7,6 @@ import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 
-import club.fdawei.datawatcher.api.data.ChangeEvent;
-import club.fdawei.datawatcher.api.data.ChangeEventWrapper;
 
 public abstract class AbsWatcherProxy<TARGET> implements IWatcherProxy {
 
@@ -79,17 +77,10 @@ public abstract class AbsWatcherProxy<TARGET> implements IWatcherProxy {
 
     @Override
     public boolean equals(Object obj) {
-        if (targetRef.get() == null) {
+        if (obj instanceof AbsWatcherProxy) {
+            return this.targetRef.get() == ((AbsWatcherProxy) obj).targetRef.get();
+        } else {
             return false;
         }
-        return targetRef.get() == obj;
-    }
-
-    public static <S, F> ChangeEvent<S, F> obtainChangeEvent(Object source, Object oldValue, Object newValue) {
-        ChangeEventWrapper<S, F> changeEvent = new ChangeEventWrapper<>();
-        changeEvent.setSource((S) source);
-        changeEvent.setOldValue((F) oldValue);
-        changeEvent.setNewValue((F) newValue);
-        return changeEvent;
     }
 }

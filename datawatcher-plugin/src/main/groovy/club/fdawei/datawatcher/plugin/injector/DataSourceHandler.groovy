@@ -32,7 +32,6 @@ class DataSourceHandler extends ClassHandler {
     private void handleDataFieldsClass(CtClass dataFieldsCtClass, File dir) {
         def sourceField = dataFieldsCtClass.getDeclaredField(ClassInfoDef.DataFields.FIELD_SOURCE_NAME)
         def dataSourceCtClass = sourceField.type
-        PluginLogger.i(TAG, "handle ${dataSourceCtClass.name}")
         if (dataSourceCtClass.isFrozen()) {
             dataSourceCtClass.defrost()
         }
@@ -98,7 +97,6 @@ class DataSourceHandler extends ClassHandler {
                 }
         }
         def autoFindSetter = isAutoFindSetter(ctClass)
-        PluginLogger.i(TAG, "hookAllSetterMethod autoFindSetter=${autoFindSetter}")
         ctClass.declaredMethods.each {
             ctMethod ->
                 if (autoFindSetter) {

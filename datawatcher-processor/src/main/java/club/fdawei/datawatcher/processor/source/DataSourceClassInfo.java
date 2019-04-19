@@ -4,7 +4,7 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +25,7 @@ public class DataSourceClassInfo {
     private String pkgName;
     private String simpleName;
     private TypeElement typeElement;
-    private Map<String, DataSourceClassInfo> innerClassMap = new HashMap<>();
+    private Map<String, DataSourceClassInfo> innerClassMap = new LinkedHashMap<>();
     private boolean isTopClass = true;
 
     public DataSourceClassInfo(String pkgName, String simpleName) {

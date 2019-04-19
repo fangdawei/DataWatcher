@@ -4,12 +4,13 @@ package club.fdawei.datawatcher.processor.source;
 import com.squareup.javapoet.JavaFile;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.TypeElement;
 
+import club.fdawei.datawatcher.processor.common.CommonTag;
 import club.fdawei.datawatcher.processor.common.JavaClassGenerator;
 
 /**
@@ -17,9 +18,13 @@ import club.fdawei.datawatcher.processor.common.JavaClassGenerator;
  */
 public class DataFieldsGenerator extends JavaClassGenerator {
 
-    private static final String TAG = "ClassGenerator";
+    private static final String TAG = CommonTag.TAG;
 
-    private Map<String, DataSourceClassInfo> rootDataSourceMap = new HashMap<>();
+    private Map<String, DataSourceClassInfo> rootDataSourceMap = new LinkedHashMap<>();
+
+    public void clear() {
+        rootDataSourceMap.clear();
+    }
 
     public void addDataSource(TypeElement typeElement, String pkgName) {
         if (typeElement == null || pkgName == null) {
@@ -65,7 +70,7 @@ public class DataFieldsGenerator extends JavaClassGenerator {
                 javaFile.writeTo(filer);
                 logi(TAG, "[%s.%s] gen success", pkgName, classSimpleName);
             } catch (IOException e) {
-                loge(TAG, "[%s.%s] gen error", pkgName, classSimpleName);
+                loge(TAG, "[%s.%s] gen error, %s", pkgName, classSimpleName, e.getMessage());
             }
         }
     }

@@ -6,7 +6,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,9 +15,9 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
 
 import club.fdawei.datawatcher.annotation.DataWatch;
+import club.fdawei.datawatcher.processor.common.CommonTag;
 import club.fdawei.datawatcher.processor.common.JavaClassGenerator;
 import club.fdawei.datawatcher.processor.common.TypeBox;
 
@@ -26,9 +26,13 @@ import club.fdawei.datawatcher.processor.common.TypeBox;
  */
 public class WatcherProxyGenerator extends JavaClassGenerator {
 
-    private static final String TAG = "ClassGenerator";
+    private static final String TAG = CommonTag.TAG;
 
-    private Map<TypeElement, DataWatchOwnerClassInfo> dataWatchOwnerMap = new HashMap();
+    private Map<TypeElement, DataWatchOwnerClassInfo> dataWatchOwnerMap = new LinkedHashMap<>();
+
+    public void clear() {
+        dataWatchOwnerMap.clear();
+    }
 
     public void addExecutableElement(ExecutableElement executableElement, String pkgName) {
         if (!checkExecutableElementValid(executableElement)) {
@@ -47,7 +51,7 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
     public void genJavaFile(Filer filer) {
         for(DataWatchOwnerClassInfo dataWatchOwner : dataWatchOwnerMap.values()) {
             String pkgName = dataWatchOwner.getPkgName();
-            String simpleName = dataWatchOwner.getSimpleName();
+            String simpleName = dataWatchOwner.getProxySimpleName();
             JavaFile watcherProxyJavaFile = JavaFile.builder(pkgName, dataWatchOwner.buildTypeSpec())
                     .addFileComment("Generated automatically. Do not modify!")
                     .build();
@@ -55,7 +59,7 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
                 watcherProxyJavaFile.writeTo(filer);
                 logi(TAG, "[%s.%s] gen success", pkgName, simpleName);
             } catch (IOException e) {
-                loge(TAG, "[%s.%s] gen error", pkgName, simpleName);
+                loge(TAG, "[%s.%s] gen error, %s", pkgName, simpleName, e.getMessage());
                 e.printStackTrace();
             }
             String creatorSimpleName = dataWatchOwner.getCreatorSimpleName();
@@ -66,7 +70,7 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
                 creatorJavaFile.writeTo(filer);
                 logi(TAG, "[%s.%s] gen success", pkgName, creatorSimpleName);
             } catch (IOException e) {
-                loge(TAG, "[%s.%s] gen error", pkgName, creatorSimpleName);
+                loge(TAG, "[%s.%s] gen error, %s", pkgName, creatorSimpleName, e.getMessage());
                 e.printStackTrace();
             }
         }

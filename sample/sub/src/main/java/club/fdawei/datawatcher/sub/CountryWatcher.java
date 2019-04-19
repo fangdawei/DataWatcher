@@ -15,7 +15,7 @@ public class CountryWatcher {
     }
 
     @DataWatch(field = fields_Country.name, notifyWhenBind = false)
-    public void onNameChange(ChangeEvent event) {
+    public void onNameChange(ChangeEvent<Country, String> event) {
         Toast.makeText(context, "Country name is " + event.getNewValue(), Toast.LENGTH_SHORT).show();
     }
 

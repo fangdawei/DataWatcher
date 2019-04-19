@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import club.fdawei.datawatcher.annotation.DataWatch;
@@ -14,11 +15,12 @@ import club.fdawei.datawatcher.data.fields_UserInfo;
 import club.fdawei.datawatcher.sub.Country;
 import club.fdawei.datawatcher.api.data.ChangeEvent;
 import club.fdawei.datawatcher.sub.CountryWatcher;
+import club.fdawei.datawatcher.test.Tester;
 
 
 public class MainActivity extends AppCompatActivity {
 
-    private TextView tvName, tvAge, tvLocation;
+    private TextView tvName, tvAge, tvLocation, tvTesterFunBtn;
     private EditText etName, etAge, etLocation, etCountryName, etProvinceName, etCityName;
     private UserInfo userInfo = new UserInfo();
     private Country country = new Country();
@@ -27,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     private CountryWatcher countryWatcher;
     private CountryWatcher.ProvinceWatcher provinceWatcher;
     private CountryWatcher.ProvinceWatcher.CityWatcher cityWatcher;
+    private Tester tester = new Tester();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
         etCountryName = findViewById(R.id.et_country_name);
         etProvinceName = findViewById(R.id.et_province_name);
         etCityName = findViewById(R.id.et_city_name);
+        tvTesterFunBtn = findViewById(R.id.tv_tester_fun);
 
         initListeners();
 
@@ -176,6 +180,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable s) {
                 city.setName(s.toString());
+            }
+        });
+
+        tvTesterFunBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (tester.running) {
+                    tester.stop();
+                    tvTesterFunBtn.setText("Start");
+                } else {
+                    tester.start();
+                    tvTesterFunBtn.setText("Stop");
+                }
             }
         });
     }

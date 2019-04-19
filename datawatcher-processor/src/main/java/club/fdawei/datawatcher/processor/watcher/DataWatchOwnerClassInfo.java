@@ -7,15 +7,13 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
 
 import club.fdawei.datawatcher.annotation.DataWatch;
 import club.fdawei.datawatcher.processor.common.GenClassInfoDef;
@@ -29,7 +27,7 @@ public class DataWatchOwnerClassInfo {
     private String pkgName;
     private String simpleName;
     private TypeElement typeElement;
-    private Set<ExecutableElement> executableSet = new HashSet<>();
+    private Set<ExecutableElement> executableSet = new LinkedHashSet<>();
 
     public DataWatchOwnerClassInfo(String pkgName, TypeElement typeElement) {
         this.pkgName = pkgName;
@@ -41,10 +39,6 @@ public class DataWatchOwnerClassInfo {
 
     public String getPkgName() {
         return pkgName;
-    }
-
-    public String getSimpleName() {
-        return simpleName;
     }
 
     public String getProxySimpleName() {
@@ -116,20 +110,23 @@ public class DataWatchOwnerClassInfo {
                     .addParameter(Object.class, "source")
                     .addParameter(Object.class, "oldValue")
                     .addParameter(Object.class, "newValue")
-                    .beginControlFlow("if (getTarget() == null " +
-                            "|| !(source instanceof $T) " +
+                    .beginControlFlow("if (getTarget() == null)")
+                    .addStatement("return")
+                    .endControlFlow()
+                    .beginControlFlow("if (!(source instanceof $T) " +
                             "|| (oldValue != null && !(oldValue instanceof $T)) " +
                             "|| (newValue != null && !(newValue instanceof $T)))",
                             sourceType, fieldType, fieldType)
                     .addStatement("return")
                     .endControlFlow()
-                    .addStatement("$T event = obtainChangeEvent(source, oldValue, newValue)", paramTypeName)
+                    .addStatement("$T event = $T.obtainChangeEvent(source, oldValue, newValue)", paramTypeName, TypeBox.CHANGE_EVENT)
                     .addStatement("getTarget().$L(event)", executableElement.getSimpleName().toString())
                     .build();
             TypeSpec publisher = TypeSpec.anonymousClassBuilder("")
                     .superclass(TypeBox.NOTIFY_PUBLISHER)
                     .addMethod(publishMethod)
                     .build();
+            initPublishersMethodBuilder.addComment("register $L publisher", executableElement.getSimpleName().toString());
             initPublishersMethodBuilder.addStatement("$T $L = $L", TypeBox.NOTIFY_PUBLISHER, publisherName, publisher);
             initPublishersMethodBuilder.addStatement("$L.setThread($L)", publisherName, dataWatch.thread());
             initPublishersMethodBuilder.addStatement("$L.setNeedNotifyWhenBind($L)", publisherName, dataWatch.notifyWhenBind());

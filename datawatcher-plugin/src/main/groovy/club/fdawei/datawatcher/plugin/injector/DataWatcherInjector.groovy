@@ -1,11 +1,8 @@
 package club.fdawei.datawatcher.plugin.injector
 
-import club.fdawei.datawatcher.plugin.common.ClassInfoDef
-import club.fdawei.datawatcher.plugin.log.PluginLogger
 import javassist.ClassPath
 import javassist.ClassPool
 
-import java.util.jar.JarFile
 
 class DataWatcherInjector implements InjectHelper {
 
@@ -16,48 +13,41 @@ class DataWatcherInjector implements InjectHelper {
     private final DataSourceHandler dataSourceHandler = new DataSourceHandler(this)
     private final WatcherProxyHandler watcherProxyHandler = new WatcherProxyHandler(this)
 
-    DataWatcherInjector() {
-
-    }
-
-    void addClassPath(String pathName) {
-        def classPath = classPool.appendClassPath(pathName)
-        classPathList.add(classPath)
+    void addClassPath(List<String> pathList) {
+        if (pathList == null) {
+            return
+        }
+        for(String path : pathList) {
+            def classPath = classPool.appendClassPath(path)
+            classPathList.add(classPath)
+        }
     }
 
     void inject(InjectInfo injectInfo) {
         if (!isInjectInfoValid(injectInfo)) {
             return
         }
-        PluginLogger.i(TAG, "inject ${injectInfo.sourceDir}")
-        def inputDir = injectInfo.sourceDir
-        if (inputDir.isDirectory()) {
-            inputDir.eachFileRecurse {
-                file ->
-                    if (file.isDirectory()) {
-                        return
-                    } else if (ClassInfoDef.DataFields.isDataFields(file.name)) {
-                        dataSourceHandler.handle(file, inputDir)
-                    } else if (ClassInfoDef.WatcherProxy.isWatcherProxy(file.name)) {
-                        watcherProxyHandler.handle(file, inputDir)
-                    }
-            }
+        if (injectInfo.classInfoList == null) {
+            return
         }
-    }
-
-    private boolean isInjectInfoValid(InjectInfo injectInfo) {
-        if (injectInfo == null) {
-            return false
+        injectInfo.classInfoList.each {
+            classInfo ->
+                def classFile = new File(injectInfo.sourceDir, classInfo.name)
+                switch (classInfo.type) {
+                    case InjectClassInfo.Type.DATAFIELDS:
+                        dataSourceHandler.handle(classFile, injectInfo.sourceDir)
+                        break
+                    case InjectClassInfo.Type.WATCHERPROXY:
+                        watcherProxyHandler.handle(classFile, injectInfo.sourceDir)
+                        break
+                }
         }
-        if (injectInfo.sourceDir == null || !injectInfo.sourceDir.exists()) {
-            return false
-        }
-        return true
     }
 
     void clear() {
         classPathList.each {
-            classPool.removeClassPath()
+            classPath ->
+                classPool.removeClassPath(classPath)
         }
         classPathList.clear()
     }
@@ -67,21 +57,13 @@ class DataWatcherInjector implements InjectHelper {
         return classPool
     }
 
-    boolean checkJarNeedInject(String jarPath) {
-        def isNeedInject = false
-        def jarFile = new JarFile(jarPath)
-        def entries = jarFile.entries()
-        while (entries.hasMoreElements()) {
-            def jarEntry = entries.nextElement()
-            if (jarEntry.isDirectory()) {
-                continue
-            }
-            if (ClassInfoDef.DataFields.isDataFields(jarEntry.name)
-                    || ClassInfoDef.WatcherProxy.isWatcherProxy(jarEntry.name)) {
-                isNeedInject = true
-                break
-            }
+    private static boolean isInjectInfoValid(InjectInfo injectInfo) {
+        if (injectInfo == null) {
+            return false
         }
-        return isNeedInject
+        if (injectInfo.sourceDir == null || !injectInfo.sourceDir.exists()) {
+            return false
+        }
+        return true
     }
 }

@@ -22,7 +22,6 @@ class WatcherProxyHandler extends ClassHandler {
         def watcherProxyClassName = getClassNameFromFile(classFile, dir)
         def watcherProxyCtClass = helper.classPool.getCtClass(watcherProxyClassName)
         def watcherTargetCtClass = watcherProxyCtClass.getDeclaredField(ClassInfoDef.WatcherProxy.FIELD_TARGET_NAME).type
-        PluginLogger.i(TAG, "handle ${watcherProxyClassName}")
         if (watcherProxyCtClass.isFrozen()) {
             watcherProxyCtClass.defrost()
         }

@@ -1,28 +1,61 @@
 package club.fdawei.datawatcher.plugin.injector
 
-import com.android.build.api.transform.Format
 
 class InjectInfo {
 
     private File sourceDir
+    private List<InjectClassInfo> classInfoList
     private File destFile
-    private Format format
+    private Type type
 
-    InjectInfo(File sourceDir, File destFile, Format format) {
+    InjectInfo(File sourceDir, File destFile, Type type) {
         this.sourceDir = sourceDir
         this.destFile = destFile
-        this.format = format
+        this.type = type
+    }
+
+    void setClassInfoList(List<InjectClassInfo> classInfoList) {
+        this.classInfoList = classInfoList
     }
 
     File getSourceDir() {
         return sourceDir
     }
 
+    List<InjectClassInfo> getClassInfoList() {
+        return classInfoList
+    }
+
     File getDestFile() {
         return destFile
     }
 
-    Format getFormat() {
-        return format
+    Type getType() {
+        return type
+    }
+
+    @Override
+    String toString() {
+        return "InjectInfo{" +
+                "sourceDir=" + sourceDir +
+                ", classInfoList=" + classInfoList +
+                ", type=" + type +
+                '}'
+    }
+
+//    @Override
+//    String toString() {
+//        return "InjectInfo{" +
+//                "sourceDir=" + sourceDir +
+//                ", classInfoList size=" + (classInfoList == null ? 0 : classInfoList.size()) +
+//                ", type=" + type +
+//                '}'
+//    }
+
+
+
+
+    enum Type {
+        JAR, DIR, FILE_LIST
     }
 }

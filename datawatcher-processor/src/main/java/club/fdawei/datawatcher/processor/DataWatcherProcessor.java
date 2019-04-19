@@ -27,6 +27,9 @@ public class DataWatcherProcessor extends AbstractProcessor {
     private Types mTypeUtils;
     private Logger mLogger;
 
+    private DataFieldsGenerator dataFieldsGenerator = new DataFieldsGenerator();
+    private WatcherProxyGenerator watcherProxyGenerator = new WatcherProxyGenerator();
+
     @Override
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
         super.init(processingEnvironment);
@@ -35,6 +38,8 @@ public class DataWatcherProcessor extends AbstractProcessor {
         mElementUtils = processingEnvironment.getElementUtils();
         mTypeUtils = processingEnvironment.getTypeUtils();
         mLogger = new Logger(mMessager);
+        dataFieldsGenerator.setLogger(mLogger);
+        watcherProxyGenerator.setLogger(mLogger);
     }
 
     @Override
@@ -52,44 +57,43 @@ public class DataWatcherProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
-        processDataSource(roundEnvironment);
-        processDataWatch(roundEnvironment);
+        dataFieldsGenerator.clear();
+        collectDataSource(roundEnvironment);
+        dataFieldsGenerator.genJavaFile(mFiler);
+        collectDataWatch(roundEnvironment);
+        watcherProxyGenerator.clear();
+        collectDataWatch(roundEnvironment);
+        watcherProxyGenerator.genJavaFile(mFiler);
         return true;
     }
 
-    private void processDataSource(RoundEnvironment roundEnvironment) {
+    private void collectDataSource(RoundEnvironment roundEnvironment) {
         Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(DataSource.class);
         if (elements == null) {
             return;
         }
-        DataFieldsGenerator generator = new DataFieldsGenerator();
-        generator.setLogger(mLogger);
         for (Element element : elements) {
             if (!(element instanceof TypeElement)) {
                 continue;
             }
             TypeElement typeElement = (TypeElement) element;
             String pkgName = getPkgName(typeElement);
-            generator.addDataSource(typeElement, pkgName);
+            dataFieldsGenerator.addDataSource(typeElement, pkgName);
         }
-        generator.genJavaFile(mFiler);
     }
 
-    private void processDataWatch(RoundEnvironment roundEnvironment) {
+    private void collectDataWatch(RoundEnvironment roundEnvironment) {
         Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(DataWatch.class);
         if (elements == null) {
             return;
         }
-        WatcherProxyGenerator generator = new WatcherProxyGenerator();
-        generator.setLogger(mLogger);
         for (Element element : elements) {
             if (!(element instanceof ExecutableElement)) {
                 return;
             }
             ExecutableElement executableElement = (ExecutableElement) element;
-            generator.addExecutableElement(executableElement, getPkgName(executableElement));
+            watcherProxyGenerator.addExecutableElement(executableElement, getPkgName(executableElement));
         }
-        generator.genJavaFile(mFiler);
     }
 
     private String getPkgName(Element element) {

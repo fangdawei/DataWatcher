@@ -2,11 +2,11 @@ package club.fdawei.datawatcher.plugin.log
 
 class PluginLogger {
 
-    static void i(String tag, String msg) {
-        System.out.println "==> $tag $msg"
+    static void i(String tag, String format, Object... args) {
+        System.out.println(String.format("==> %s %s", tag, String.format(format, args)))
     }
 
-    static void e(String tag, String msg) {
-        System.err.println "==> $tag $msg"
+    static void e(String tag, String format, Object... args) {
+        System.err.println(String.format("==> %s %s", tag, String.format(format, args)))
     }
 }
