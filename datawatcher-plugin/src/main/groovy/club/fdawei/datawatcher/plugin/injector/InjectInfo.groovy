@@ -38,22 +38,11 @@ class InjectInfo {
     String toString() {
         return "InjectInfo{" +
                 "sourceDir=" + sourceDir +
-                ", classInfoList=" + classInfoList +
+                ", classInfoList size=" + (classInfoList == null ? 0 : classInfoList.size()) +
                 ", type=" + type +
+                ", destFile=" + destFile.absolutePath +
                 '}'
     }
-
-//    @Override
-//    String toString() {
-//        return "InjectInfo{" +
-//                "sourceDir=" + sourceDir +
-//                ", classInfoList size=" + (classInfoList == null ? 0 : classInfoList.size()) +
-//                ", type=" + type +
-//                '}'
-//    }
-
-
-
 
     enum Type {
         JAR, DIR, FILE_LIST
