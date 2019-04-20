@@ -57,9 +57,9 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
                     .build();
             try {
                 watcherProxyJavaFile.writeTo(filer);
-                logi(TAG, "[%s.%s] gen success", pkgName, simpleName);
+                logi(TAG, "gen success %s.%s", pkgName, simpleName);
             } catch (IOException e) {
-                loge(TAG, "[%s.%s] gen error, %s", pkgName, simpleName, e.getMessage());
+                loge(TAG, "gen error %s.%s, %s", pkgName, simpleName, e.getMessage());
                 e.printStackTrace();
             }
             String creatorSimpleName = dataWatchOwner.getCreatorSimpleName();
@@ -68,9 +68,9 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
                     .build();
             try {
                 creatorJavaFile.writeTo(filer);
-                logi(TAG, "[%s.%s] gen success", pkgName, creatorSimpleName);
+                logi(TAG, "gen success %s.%s", pkgName, creatorSimpleName);
             } catch (IOException e) {
-                loge(TAG, "[%s.%s] gen error, %s", pkgName, creatorSimpleName, e.getMessage());
+                loge(TAG, "gen error %s.%s, %s", pkgName, creatorSimpleName, e.getMessage());
                 e.printStackTrace();
             }
         }

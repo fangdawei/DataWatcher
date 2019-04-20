@@ -1,4 +1,4 @@
-package club.fdawei.datawatcher.sub;
+package club.fdawei.datawatcher.sample.sub;
 
 import club.fdawei.datawatcher.annotation.DataSource;
 import club.fdawei.datawatcher.annotation.FieldIgnore;

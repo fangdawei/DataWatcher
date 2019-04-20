@@ -1,4 +1,4 @@
-package club.fdawei.datawatcher;
+package club.fdawei.datawatcher.sample;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -8,15 +8,15 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
+
 import club.fdawei.datawatcher.annotation.DataWatch;
 import club.fdawei.datawatcher.api.DataWatcher;
-import club.fdawei.datawatcher.data.UserInfo;
-import club.fdawei.datawatcher.data.fields_UserInfo;
-import club.fdawei.datawatcher.sub.Country;
+import club.fdawei.datawatcher.sample.data.UserInfo;
+import club.fdawei.datawatcher.sample.data.fields_UserInfo;
+import club.fdawei.datawatcher.sample.sub.Country;
 import club.fdawei.datawatcher.api.data.ChangeEvent;
-import club.fdawei.datawatcher.sub.CountryWatcher;
-import club.fdawei.datawatcher.test.Tester;
-
+import club.fdawei.datawatcher.sample.sub.CountryWatcher;
+import club.fdawei.datawatcher.sample.test.Tester;
 
 public class MainActivity extends AppCompatActivity {
 
