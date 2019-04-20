@@ -1,13 +1,9 @@
 package club.fdawei.datawatcher.plugin.injector
 
 import club.fdawei.datawatcher.plugin.common.ClassInfoDef
-import club.fdawei.datawatcher.plugin.log.PluginLogger
 import javassist.*
 import javassist.bytecode.AnnotationsAttribute
-import javassist.bytecode.AttributeInfo
-import javassist.bytecode.annotation.Annotation
 import javassist.bytecode.annotation.BooleanMemberValue
-import javassist.bytecode.annotation.MemberValue
 import javassist.bytecode.annotation.StringMemberValue
 import javassist.expr.ExprEditor
 import javassist.expr.FieldAccess
@@ -86,7 +82,7 @@ class DataSourceHandler extends ClassHandler {
 
     private void hookAllSetterMethod(CtClass ctClass, CtClass fieldsCtClass) {
         Set<CtField> sourceFieldSet  = new HashSet<>()
-        CtClass stringCtClass = helper.classPool.getCtClass('java.lang.String')
+        CtClass stringCtClass = helper.classPool.getCtClass(ClassInfoDef.LString.NAME)
         fieldsCtClass.declaredFields.findAll {
             ctField -> ctField.type == stringCtClass
         }.each {
@@ -146,7 +142,7 @@ class DataSourceHandler extends ClassHandler {
     }
 
     private void hookSetter(CtMethod ctMethod, Set<CtField> sourceFieldSet, CtClass fieldsCtClass) {
-        ctMethod.instrument(new ExprEditor(){
+        ctMethod.instrument(new ExprEditor() {
             @Override
             void edit(FieldAccess f) throws CannotCompileException {
                 if (f.writer && sourceFieldSet.contains(f.field)) {

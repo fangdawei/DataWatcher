@@ -6,17 +6,12 @@ import club.fdawei.datawatcher.plugin.injector.InjectClassInfo
 import club.fdawei.datawatcher.plugin.injector.InjectInfo
 import club.fdawei.datawatcher.plugin.log.PluginLogger
 import club.fdawei.datawatcher.plugin.util.JarUtils
-import com.android.build.api.transform.DirectoryInput
-import com.android.build.api.transform.Format
-import com.android.build.api.transform.JarInput
-import com.android.build.api.transform.Status
-import com.android.build.api.transform.TransformInvocation
+import com.android.build.api.transform.*
 import com.android.ide.common.internal.WaitableExecutor
 import com.android.utils.FileUtils
 import org.apache.commons.codec.digest.DigestUtils
 
 import java.util.jar.JarFile
-
 
 class TransformHandler {
 
@@ -94,9 +89,9 @@ class TransformHandler {
                 break
             case InjectInfo.Type.FILE_LIST:
                 if (injectInfo.classInfoList != null) {
-                    for (InjectClassInfo classInfo : injectInfo.classInfoList) {
-                        def sourceFile = new File(injectInfo.sourceDir, classInfo.name)
-                        def destFile = new File(injectInfo.destFile, classInfo.name)
+                    injectInfo.classInfoList.each {
+                        def sourceFile = new File(injectInfo.sourceDir, it.name)
+                        def destFile = new File(injectInfo.destFile, it.name)
                         if (destFile.exists()) {
                             destFile.delete()
                         }

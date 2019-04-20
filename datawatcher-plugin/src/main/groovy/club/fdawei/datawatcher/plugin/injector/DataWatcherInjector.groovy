@@ -31,23 +31,21 @@ class DataWatcherInjector implements InjectHelper {
             return
         }
         injectInfo.classInfoList.each {
-            classInfo ->
-                def classFile = new File(injectInfo.sourceDir, classInfo.name)
-                switch (classInfo.type) {
-                    case InjectClassInfo.Type.DATAFIELDS:
-                        dataSourceHandler.handle(classFile, injectInfo.sourceDir)
-                        break
-                    case InjectClassInfo.Type.WATCHERPROXY:
-                        watcherProxyHandler.handle(classFile, injectInfo.sourceDir)
-                        break
-                }
+            def classFile = new File(injectInfo.sourceDir, it.name)
+            switch (it.type) {
+                case InjectClassInfo.Type.DATAFIELDS:
+                    dataSourceHandler.handle(classFile, injectInfo.sourceDir)
+                    break
+                case InjectClassInfo.Type.WATCHERPROXY:
+                    watcherProxyHandler.handle(classFile, injectInfo.sourceDir)
+                    break
+            }
         }
     }
 
     void clear() {
         classPathList.each {
-            classPath ->
-                classPool.removeClassPath(classPath)
+            classPool.removeClassPath(it)
         }
         classPathList.clear()
     }

@@ -64,4 +64,8 @@ class ClassInfoDef {
     static class HashMap {
         static final String NAME = 'java.util.HashMap'
     }
+
+    static class LString {
+        static final String NAME = 'java.lang.String'
+    }
 }

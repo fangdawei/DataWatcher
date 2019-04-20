@@ -27,19 +27,18 @@ class WatcherProxyHandler extends ClassHandler {
         }
         Map<CtField, String> fieldBindKeyMap = new HashMap<>();
         watcherProxyCtClass.declaredFields.findAll() {
-            ctField -> isBindKeyField(ctField)
+            isBindKeyField(it)
         }.each {
-            ctField ->
-                def bindKey = getFieldBindKey(ctField, watcherTargetCtClass)
-                if (bindKey != null) {
-                    fieldBindKeyMap.put(ctField, bindKey)
-                }
+            def bindKey = getFieldBindKey(it, watcherTargetCtClass)
+            if (bindKey != null) {
+                fieldBindKeyMap.put(it, bindKey)
+            }
         }
         if (fieldBindKeyMap.size() > 0) {
             def srcBuilder = new StringBuilder()
             srcBuilder.append("{")
-            for(Map.Entry<CtField, String> entry : fieldBindKeyMap.entrySet()) {
-                srcBuilder.append("${entry.key.name} = \"${entry.value}\";")
+            fieldBindKeyMap.each {
+                srcBuilder.append("${it.key.name} = \"${it.value}\";")
             }
             srcBuilder.append("}")
             def initBindKeysMethod = watcherProxyCtClass.getDeclaredMethod(ClassInfoDef.WatcherProxy.INIT_BINDKEYS_METHOD_NAME)
@@ -55,7 +54,7 @@ class WatcherProxyHandler extends ClassHandler {
         if (!field.name.endsWith(ClassInfoDef.WatcherProxy.BINDKEY_FIELD_NAME_SUFFIX)) {
             return false
         }
-        if (field.type != helper.classPool.getCtClass('java.lang.String')) {
+        if (field.type != helper.classPool.getCtClass(ClassInfoDef.LString.NAME)) {
             return false
         }
         return true
