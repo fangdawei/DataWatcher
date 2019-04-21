@@ -17,6 +17,9 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
 
 import club.fdawei.datawatcher.annotation.DataWatch;
 import club.fdawei.datawatcher.processor.common.CommonTag;
@@ -62,6 +65,26 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
             if (element.getKind() != ElementKind.METHOD) {
                 continue;
             }
+            ExecutableElement executableElement = (ExecutableElement) element;
+            if (executableElement.getAnnotation(DataWatch.class) == null) {
+                continue;
+            }
+            addExecutableWithDataWatch(typeElement, executableElement);
+        }
+
+        TypeMirror superclassTypeMirror = typeElement.getSuperclass();
+        while (superclassTypeMirror != null && !TypeName.get(superclassTypeMirror).equals(ClassName.get(Object.class))) {
+            if (superclassTypeMirror.getKind() != TypeKind.DECLARED) {
+                break;
+            }
+            DeclaredType superclassType = (DeclaredType) superclassTypeMirror;
+            Element superclassElement = superclassType.asElement();
+            if (superclassElement.getKind() != ElementKind.CLASS) {
+                break;
+            }
+            TypeElement superclassTypeElement = (TypeElement) superclassElement;
+            addTypeWithDataWatcher(superclassTypeElement);
+            superclassTypeMirror = superclassTypeElement.getSuperclass();
         }
     }
 
