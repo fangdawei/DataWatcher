@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.processing.Filer;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -34,17 +36,33 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
         dataWatchOwnerMap.clear();
     }
 
-    public void addExecutableElement(ExecutableElement executableElement, String pkgName) {
+    public void addExecutableWithDataWatch(ExecutableElement executableElement) {
         if (!checkExecutableElementValid(executableElement)) {
             return;
         }
         TypeElement typeElement = (TypeElement) executableElement.getEnclosingElement();
+        addExecutableWithDataWatch(typeElement, executableElement);
+    }
+
+    public void addExecutableWithDataWatch(TypeElement typeElement, ExecutableElement executableElement) {
+        if (!checkExecutableElementValid(executableElement)) {
+            return;
+        }
         DataWatchOwnerClassInfo dataWatchOwner = dataWatchOwnerMap.get(typeElement);
         if (dataWatchOwner == null) {
-            dataWatchOwner = new DataWatchOwnerClassInfo(pkgName, typeElement);
+            dataWatchOwner = new DataWatchOwnerClassInfo(getPkgName(typeElement), typeElement);
             dataWatchOwnerMap.put(typeElement, dataWatchOwner);
         }
         dataWatchOwner.addExecutableElement(executableElement);
+    }
+
+    public void addTypeWithDataWatcher(TypeElement typeElement) {
+        List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
+        for(Element element : enclosedElements) {
+            if (element.getKind() != ElementKind.METHOD) {
+                continue;
+            }
+        }
     }
 
     @Override

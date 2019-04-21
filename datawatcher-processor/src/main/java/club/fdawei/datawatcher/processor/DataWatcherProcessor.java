@@ -2,6 +2,7 @@ package club.fdawei.datawatcher.processor;
 
 import club.fdawei.datawatcher.annotation.DataSource;
 import club.fdawei.datawatcher.annotation.DataWatch;
+import club.fdawei.datawatcher.annotation.DataWatcher;
 import club.fdawei.datawatcher.processor.common.CommonTag;
 import club.fdawei.datawatcher.processor.log.Logger;
 import club.fdawei.datawatcher.processor.source.DataFieldsGenerator;
@@ -44,8 +45,10 @@ public class DataWatcherProcessor extends AbstractProcessor {
         mLogger = new Logger(mMessager);
         dataFieldsGenerator.setTypeUtils(mTypeUtils);
         dataFieldsGenerator.setLogger(mLogger);
+        dataFieldsGenerator.setElementUtils(mElementUtils);
         watcherProxyGenerator.setTypeUtils(mTypeUtils);
         watcherProxyGenerator.setLogger(mLogger);
+        watcherProxyGenerator.setElementUtils(mElementUtils);
     }
 
     @Override
@@ -53,6 +56,7 @@ public class DataWatcherProcessor extends AbstractProcessor {
         Set<String> types = new LinkedHashSet<>();
         types.add(DataSource.class.getCanonicalName());
         types.add(DataWatch.class.getCanonicalName());
+        types.add(DataWatcher.class.getCanonicalName());
         return types;
     }
 
@@ -68,6 +72,7 @@ public class DataWatcherProcessor extends AbstractProcessor {
         dataFieldsGenerator.genJavaFile(mFiler);
         watcherProxyGenerator.clear();
         collectDataWatch(roundEnvironment);
+        collectDataWatcher(roundEnvironment);
         watcherProxyGenerator.genJavaFile(mFiler);
         return true;
     }
@@ -83,8 +88,7 @@ public class DataWatcherProcessor extends AbstractProcessor {
                 continue;
             }
             TypeElement typeElement = (TypeElement) element;
-            String pkgName = getPkgName(typeElement);
-            dataFieldsGenerator.addDataSource(typeElement, pkgName);
+            dataFieldsGenerator.addTypeWithDataSource(typeElement);
         }
     }
 
@@ -99,11 +103,22 @@ public class DataWatcherProcessor extends AbstractProcessor {
                 continue;
             }
             ExecutableElement executableElement = (ExecutableElement) element;
-            watcherProxyGenerator.addExecutableElement(executableElement, getPkgName(executableElement));
+            watcherProxyGenerator.addExecutableWithDataWatch(executableElement);
         }
     }
 
-    private String getPkgName(Element element) {
-        return mElementUtils.getPackageOf(element).getQualifiedName().toString();
+    private void collectDataWatcher(RoundEnvironment roundEnvironment) {
+        Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(DataWatcher.class);
+        if (elements == null) {
+            return;
+        }
+        for(Element element : elements) {
+            if (element.getKind() != ElementKind.CLASS) {
+                mLogger.logw(TAG, "Only class can be annotated with @%s", DataWatcher.class.getSimpleName());
+                continue;
+            }
+            TypeElement typeElement = (TypeElement) element;
+            watcherProxyGenerator.addTypeWithDataWatcher(typeElement);
+        }
     }
 }

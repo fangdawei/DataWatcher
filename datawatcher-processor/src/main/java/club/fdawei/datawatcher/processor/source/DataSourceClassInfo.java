@@ -69,23 +69,21 @@ public class DataSourceClassInfo {
         if (typeElement != null) {
             classBuilder.addField(TypeName.get(typeElement.asType()), GenClassInfoDef.DataFields.FIELD_SOURCE_NAME, Modifier.PRIVATE);
             List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
-            if (enclosedElements != null) {
-                for (Element element : enclosedElements) {
-                    if (!(element instanceof VariableElement)) {
-                        continue;
-                    }
-                    VariableElement variableElement = (VariableElement) element;
-                    if (variableElement.getAnnotation(FieldIgnore.class) != null) {
-                        continue;
-                    }
-                    String filedName = variableElement.getSimpleName().toString();
-                    String filedValue = typeElement.getQualifiedName().toString() + "." + filedName;
-                    FieldSpec fieldSpec = FieldSpec.builder(String.class, filedName)
-                            .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-                            .initializer("$S", filedValue)
-                            .build();
-                    classBuilder.addField(fieldSpec);
+            for (Element element : enclosedElements) {
+                if (!(element instanceof VariableElement)) {
+                    continue;
                 }
+                VariableElement variableElement = (VariableElement) element;
+                if (variableElement.getAnnotation(FieldIgnore.class) != null) {
+                    continue;
+                }
+                String filedName = variableElement.getSimpleName().toString();
+                String filedValue = typeElement.getQualifiedName().toString() + "." + filedName;
+                FieldSpec fieldSpec = FieldSpec.builder(String.class, filedName)
+                        .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+                        .initializer("$S", filedValue)
+                        .build();
+                classBuilder.addField(fieldSpec);
             }
         }
         for(DataSourceClassInfo innerClass : innerClassMap.values()) {

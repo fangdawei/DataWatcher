@@ -5,6 +5,7 @@ import club.fdawei.datawatcher.plugin.log.PluginLogger
 import javassist.CtClass
 import javassist.CtField
 import javassist.bytecode.AnnotationsAttribute
+import javassist.bytecode.Descriptor
 import javassist.bytecode.annotation.StringMemberValue
 
 class WatcherProxyHandler extends ClassHandler {
@@ -29,7 +30,7 @@ class WatcherProxyHandler extends ClassHandler {
         watcherProxyCtClass.declaredFields.findAll() {
             isBindKeyField(it)
         }.each {
-            def bindKey = getFieldBindKey(it, watcherTargetCtClass)
+            def bindKey = getBindKeyFieldValue(it, watcherTargetCtClass)
             if (bindKey != null) {
                 fieldBindKeyMap.put(it, bindKey)
             }
@@ -60,10 +61,11 @@ class WatcherProxyHandler extends ClassHandler {
         return true
     }
 
-    private String getFieldBindKey(CtField ctField, CtClass watcherTargetCtClass) {
+    private String getBindKeyFieldValue(CtField ctField, CtClass watcherTargetCtClass) {
         def changeEventCtClass = helper.classPool.getCtClass(ClassInfoDef.ChangeEvent.NAME)
         def dataWatchMethodName = ctField.name.replace(ClassInfoDef.WatcherProxy.BINDKEY_FIELD_NAME_SUFFIX, '')
-        def dataWatchMethod = watcherTargetCtClass.getDeclaredMethod(dataWatchMethodName, [changeEventCtClass] as CtClass[])
+        final String dataWatchMethodDesc = Descriptor.ofMethod(CtClass.voidType, [changeEventCtClass] as CtClass[])
+        def dataWatchMethod = watcherTargetCtClass.getMethod(dataWatchMethodName, dataWatchMethodDesc)
         if (dataWatchMethod == null) {
             PluginLogger.e(TAG, "method ${dataWatchMethodName} not found in ${watcherTargetCtClass.simpleName}")
             return null

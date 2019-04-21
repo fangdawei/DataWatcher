@@ -13,6 +13,7 @@ import club.fdawei.datawatcher.annotation.DataWatch;
 import club.fdawei.datawatcher.api.DataWatcher;
 import club.fdawei.datawatcher.sample.data.UserInfo;
 import club.fdawei.datawatcher.sample.data.fields_UserInfo;
+import club.fdawei.datawatcher.sample.sub.ChildCountryWatcher;
 import club.fdawei.datawatcher.sample.sub.Country;
 import club.fdawei.datawatcher.api.data.ChangeEvent;
 import club.fdawei.datawatcher.sample.sub.CountryWatcher;
@@ -29,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private CountryWatcher countryWatcher;
     private CountryWatcher.ProvinceWatcher provinceWatcher;
     private CountryWatcher.ProvinceWatcher.CityWatcher cityWatcher;
+    private ChildCountryWatcher childCountryWatcher;
     private Tester tester = new Tester();
 
     @Override
@@ -53,11 +55,13 @@ public class MainActivity extends AppCompatActivity {
         countryWatcher = new CountryWatcher(getBaseContext());
         provinceWatcher = new CountryWatcher.ProvinceWatcher(getBaseContext());
         cityWatcher = new CountryWatcher.ProvinceWatcher.CityWatcher(getBaseContext());
+        childCountryWatcher = new ChildCountryWatcher(getBaseContext());
 
         DataWatcher.bind(this, userInfo);
         DataWatcher.bind(countryWatcher, country);
         DataWatcher.bind(provinceWatcher, province);
         DataWatcher.bind(cityWatcher, city);
+        DataWatcher.bind(childCountryWatcher, country);
     }
 
     @Override
@@ -66,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
         DataWatcher.unbindAll(countryWatcher);
         DataWatcher.unbindAll(provinceWatcher);
         DataWatcher.unbindAll(cityWatcher);
+        DataWatcher.unbindAll(childCountryWatcher);
         super.onDestroy();
     }
 
