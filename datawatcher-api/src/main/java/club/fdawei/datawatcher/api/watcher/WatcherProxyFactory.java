@@ -12,6 +12,7 @@ import club.fdawei.datawatcher.api.log.Logger;
 public class WatcherProxyFactory {
 
     private static final String TAG = "WatcherProxyFactory";
+    private static final IWatcherProxyCreator NULL_CREATOR = new NullWatcherProxyCreator();
 
     private static final Map<Class<?>, IWatcherProxyCreator> watcherProxyCreatorMap = new ConcurrentHashMap<>();
 
@@ -27,24 +28,33 @@ public class WatcherProxyFactory {
     @Nullable
     private static IWatcherProxyCreator getWatcherProxyCreator(@NonNull Object target) {
         final Class<?> targetClass = target.getClass();
-        IWatcherProxyCreator creator = null;
-        if (watcherProxyCreatorMap.containsKey(targetClass)) {
-            creator = watcherProxyCreatorMap.get(targetClass);
-        } else {
+        IWatcherProxyCreator creator = watcherProxyCreatorMap.get(targetClass);
+        if (creator == null) {
             synchronized (WatcherProxyFactory.class) {
-                if (watcherProxyCreatorMap.containsKey(targetClass)) {
-                    creator = watcherProxyCreatorMap.get(targetClass);
-                } else {
+                creator = watcherProxyCreatorMap.get(targetClass);
+                if (creator == null) {
                     final String creatorClassName = targetClass.getName() + GenClassInfoDef.WatcherProxyCreator.NAME_SUFFIX;
                     try {
                         creator = (IWatcherProxyCreator) Class.forName(creatorClassName).newInstance();
                     } catch (Exception e) {
                         Logger.e(TAG, "getWatcherProxyCreator error, %s", e.getMessage());
                     }
-                    watcherProxyCreatorMap.put(target.getClass(), creator);
+                    watcherProxyCreatorMap.put(target.getClass(), creator == null ? NULL_CREATOR : creator);
                 }
             }
         }
+        if (creator == NULL_CREATOR) {
+            creator = null;
+        }
         return creator;
+    }
+
+    private static class NullWatcherProxyCreator implements IWatcherProxyCreator {
+
+        @Nullable
+        @Override
+        public IWatcherProxy createWatcherProxy(Object target) {
+            return null;
+        }
     }
 }
