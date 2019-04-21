@@ -66,7 +66,6 @@ public class DataWatcherProcessor extends AbstractProcessor {
         dataFieldsGenerator.clear();
         collectDataSource(roundEnvironment);
         dataFieldsGenerator.genJavaFile(mFiler);
-        collectDataWatch(roundEnvironment);
         watcherProxyGenerator.clear();
         collectDataWatch(roundEnvironment);
         watcherProxyGenerator.genJavaFile(mFiler);

@@ -142,12 +142,16 @@ public class DataWatchOwnerClassInfo {
         MethodSpec createWatcherProxyMethod = MethodSpec.methodBuilder("createWatcherProxy")
                 .addModifiers(Modifier.PUBLIC)
                 .returns(proxyClass)
-                .addParameter(targetClass, "target")
-                .addStatement("return new $T(target)", proxyClass)
+                .addParameter(TypeName.OBJECT, "target")
+                .beginControlFlow("if (target instanceof $T)", targetClass)
+                .addStatement("return new $T(($T) target)", proxyClass, targetClass)
+                .nextControlFlow("else")
+                .addStatement("return null")
+                .endControlFlow()
                 .build();
         TypeSpec.Builder creatorClassBuilder = TypeSpec.classBuilder(getCreatorSimpleName())
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-                .addSuperinterface(ParameterizedTypeName.get(TypeBox.I_WATCHER_PROXY_CREATOR, proxyClass, targetClass))
+                .addSuperinterface(ParameterizedTypeName.get(TypeBox.I_WATCHER_PROXY_CREATOR, proxyClass))
                 .addMethod(createWatcherProxyMethod);
         return creatorClassBuilder.build();
     }

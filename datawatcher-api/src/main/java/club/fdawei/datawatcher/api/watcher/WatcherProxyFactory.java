@@ -15,7 +15,8 @@ public class WatcherProxyFactory {
 
     private static final Map<Class<?>, IWatcherProxyCreator> watcherProxyCreatorMap = new ConcurrentHashMap<>();
 
-    public static @Nullable IWatcherProxy createWatcherProxy(@NonNull Object target) {
+    @Nullable
+    public static IWatcherProxy createWatcherProxy(@NonNull Object target) {
         IWatcherProxyCreator creator = getWatcherProxyCreator(target);
         if (creator == null) {
             return null;
@@ -23,22 +24,24 @@ public class WatcherProxyFactory {
         return creator.createWatcherProxy(target);
     }
 
-    public static IWatcherProxyCreator getWatcherProxyCreator(@NonNull Object target) {
+    @Nullable
+    private static IWatcherProxyCreator getWatcherProxyCreator(@NonNull Object target) {
         final Class<?> targetClass = target.getClass();
-        IWatcherProxyCreator creator = watcherProxyCreatorMap.get(targetClass);
-        if (creator == null) {
+        IWatcherProxyCreator creator = null;
+        if (watcherProxyCreatorMap.containsKey(targetClass)) {
+            creator = watcherProxyCreatorMap.get(targetClass);
+        } else {
             synchronized (WatcherProxyFactory.class) {
-                creator = watcherProxyCreatorMap.get(targetClass);
-                if (creator == null) {
+                if (watcherProxyCreatorMap.containsKey(targetClass)) {
+                    creator = watcherProxyCreatorMap.get(targetClass);
+                } else {
                     final String creatorClassName = targetClass.getName() + GenClassInfoDef.WatcherProxyCreator.NAME_SUFFIX;
                     try {
                         creator = (IWatcherProxyCreator) Class.forName(creatorClassName).newInstance();
                     } catch (Exception e) {
                         Logger.e(TAG, "getWatcherProxyCreator error, %s", e.getMessage());
                     }
-                    if (creator != null) {
-                        watcherProxyCreatorMap.put(target.getClass(), creator);
-                    }
+                    watcherProxyCreatorMap.put(target.getClass(), creator);
                 }
             }
         }
