@@ -44,30 +44,18 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
             return;
         }
         TypeElement typeElement = (TypeElement) executableElement.getEnclosingElement();
-        addExecutableWithDataWatch(typeElement, executableElement);
-    }
-
-    public void addExecutableWithDataWatch(TypeElement typeElement, ExecutableElement executableElement) {
-        if (!checkExecutableElementValid(executableElement)) {
-            return;
-        }
-        DataWatchOwnerClassInfo dataWatchOwner = dataWatchOwnerMap.get(typeElement);
-        if (dataWatchOwner == null) {
-            dataWatchOwner = new DataWatchOwnerClassInfo(getPkgName(typeElement), typeElement);
-            dataWatchOwnerMap.put(typeElement, dataWatchOwner);
-        }
-        dataWatchOwner.addExecutableElement(executableElement);
+        addExecutableReal(typeElement, executableElement);
     }
 
     public void addTypeWithDataWatcher(TypeElement typeElement) {
         final Map<String, ExecutableElement> executableMap = new LinkedHashMap<>();
-        //查找自己被@DataWatch注解的方法
+        //查找被@DataWatch注解的方法
         for (Element element : typeElement.getEnclosedElements()) {
             if (element.getKind() != ElementKind.METHOD) {
                 continue;
             }
             ExecutableElement executableElement = (ExecutableElement) element;
-            if (executableElement.getAnnotation(DataWatch.class) == null) {
+            if (!checkExecutableElementValid(executableElement)) {
                 continue;
             }
             executableMap.put(executableElement.getSimpleName().toString(), executableElement);
@@ -91,20 +79,31 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
                     continue;
                 }
                 ExecutableElement executableElement = (ExecutableElement) element;
-                if (executableElement.getAnnotation(DataWatch.class) == null) {
+                if (!checkExecutableElementValid(executableElement)) {
                     continue;
                 }
                 String methodName = executableElement.getSimpleName().toString();
-                if (!executableMap.containsKey(methodName)) {
-                    executableMap.put(methodName, executableElement);
+                if (executableMap.containsKey(methodName)) {
+                    //子类已经覆盖，忽略
+                    continue;
                 }
+                executableMap.put(methodName, executableElement);
             }
             superTypeMirror = superTypeElement.getSuperclass();
         }
 
-        for(ExecutableElement executableElement : executableMap.values()) {
-            addExecutableWithDataWatch(typeElement, executableElement);
+        for (ExecutableElement executableElement : executableMap.values()) {
+            addExecutableReal(typeElement, executableElement);
         }
+    }
+
+    public void addExecutableReal(TypeElement typeElement, ExecutableElement executableElement) {
+        DataWatchOwnerClassInfo dataWatchOwner = dataWatchOwnerMap.get(typeElement);
+        if (dataWatchOwner == null) {
+            dataWatchOwner = new DataWatchOwnerClassInfo(getPkgName(typeElement), typeElement);
+            dataWatchOwnerMap.put(typeElement, dataWatchOwner);
+        }
+        dataWatchOwner.addExecutableElement(executableElement);
     }
 
     @Override
@@ -135,7 +134,6 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
             }
         }
     }
-
 
     private boolean checkExecutableElementValid(ExecutableElement executableElement) {
         if (executableElement == null) {
