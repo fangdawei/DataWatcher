@@ -60,8 +60,9 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
     }
 
     public void addTypeWithDataWatcher(TypeElement typeElement) {
-        List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
-        for(Element element : enclosedElements) {
+        final Map<String, ExecutableElement> executableMap = new LinkedHashMap<>();
+        //查找自己被@DataWatch注解的方法
+        for (Element element : typeElement.getEnclosedElements()) {
             if (element.getKind() != ElementKind.METHOD) {
                 continue;
             }
@@ -69,22 +70,40 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
             if (executableElement.getAnnotation(DataWatch.class) == null) {
                 continue;
             }
-            addExecutableWithDataWatch(typeElement, executableElement);
+            executableMap.put(executableElement.getSimpleName().toString(), executableElement);
         }
 
-        TypeMirror superclassTypeMirror = typeElement.getSuperclass();
-        while (superclassTypeMirror != null && !TypeName.get(superclassTypeMirror).equals(ClassName.get(Object.class))) {
-            if (superclassTypeMirror.getKind() != TypeKind.DECLARED) {
+        //查找父类被@DataWatch注解的方法
+        TypeMirror superTypeMirror = typeElement.getSuperclass();
+        while (superTypeMirror != null && superTypeMirror.getKind() != TypeKind.NONE
+                && !TypeName.get(superTypeMirror).equals(TypeName.OBJECT)) {
+            if (superTypeMirror.getKind() != TypeKind.DECLARED) {
                 break;
             }
-            DeclaredType superclassType = (DeclaredType) superclassTypeMirror;
-            Element superclassElement = superclassType.asElement();
-            if (superclassElement.getKind() != ElementKind.CLASS) {
+            DeclaredType superDeclaredType = (DeclaredType) superTypeMirror;
+            Element superElement = superDeclaredType.asElement();
+            if (superElement.getKind() != ElementKind.CLASS) {
                 break;
             }
-            TypeElement superclassTypeElement = (TypeElement) superclassElement;
-            addTypeWithDataWatcher(superclassTypeElement);
-            superclassTypeMirror = superclassTypeElement.getSuperclass();
+            TypeElement superTypeElement = (TypeElement) superElement;
+            for (Element element : superTypeElement.getEnclosedElements()) {
+                if (element.getKind() != ElementKind.METHOD) {
+                    continue;
+                }
+                ExecutableElement executableElement = (ExecutableElement) element;
+                if (executableElement.getAnnotation(DataWatch.class) == null) {
+                    continue;
+                }
+                String methodName = executableElement.getSimpleName().toString();
+                if (!executableMap.containsKey(methodName)) {
+                    executableMap.put(methodName, executableElement);
+                }
+            }
+            superTypeMirror = superTypeElement.getSuperclass();
+        }
+
+        for(ExecutableElement executableElement : executableMap.values()) {
+            addExecutableWithDataWatch(typeElement, executableElement);
         }
     }
 
@@ -117,6 +136,7 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
         }
     }
 
+
     private boolean checkExecutableElementValid(ExecutableElement executableElement) {
         if (executableElement == null) {
             return false;
@@ -130,6 +150,11 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
         //check method
         if (!executableElement.getModifiers().contains(Modifier.PUBLIC)) {
             logw(TAG, "Method %s with @DataWatch should be public", methodName);
+            return false;
+        }
+        //check method return
+        if (!TypeName.get(executableElement.getReturnType()).equals(TypeName.VOID)) {
+            logw(TAG, "Method %s with @DataWatch return should be void", methodName);
             return false;
         }
         //check method parameter
