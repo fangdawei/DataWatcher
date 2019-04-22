@@ -14,7 +14,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 
 import club.fdawei.datawatcher.annotation.FieldIgnore;
-import club.fdawei.datawatcher.processor.common.GenClassInfoDef;
+import club.fdawei.datawatcher.processor.common.ClassInfoBox;
 
 
 /**
@@ -60,32 +60,30 @@ public class DataSourceClassInfo {
     public TypeSpec buildTypeSpec() {
         TypeSpec.Builder classBuilder;
         if (isTopClass) {
-            classBuilder = TypeSpec.classBuilder(GenClassInfoDef.DataFields.NAME_PREFIX + simpleName)
+            classBuilder = TypeSpec.classBuilder(ClassInfoBox.DataFields.NAME_PREFIX + simpleName)
                     .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
         } else {
             classBuilder = TypeSpec.classBuilder(simpleName)
                     .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL);
         }
         if (typeElement != null) {
-            classBuilder.addField(TypeName.get(typeElement.asType()), GenClassInfoDef.DataFields.FIELD_SOURCE_NAME, Modifier.PRIVATE);
+            classBuilder.addField(TypeName.get(typeElement.asType()), ClassInfoBox.DataFields.FIELD_SOURCE_NAME, Modifier.PRIVATE);
             List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
-            if (enclosedElements != null) {
-                for (Element element : enclosedElements) {
-                    if (!(element instanceof VariableElement)) {
-                        continue;
-                    }
-                    VariableElement variableElement = (VariableElement) element;
-                    if (variableElement.getAnnotation(FieldIgnore.class) != null) {
-                        continue;
-                    }
-                    String filedName = variableElement.getSimpleName().toString();
-                    String filedValue = typeElement.getQualifiedName().toString() + "." + filedName;
-                    FieldSpec fieldSpec = FieldSpec.builder(String.class, filedName)
-                            .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-                            .initializer("$S", filedValue)
-                            .build();
-                    classBuilder.addField(fieldSpec);
+            for (Element element : enclosedElements) {
+                if (!(element instanceof VariableElement)) {
+                    continue;
                 }
+                VariableElement variableElement = (VariableElement) element;
+                if (variableElement.getAnnotation(FieldIgnore.class) != null) {
+                    continue;
+                }
+                String filedName = variableElement.getSimpleName().toString();
+                String filedValue = typeElement.getQualifiedName().toString() + "." + filedName;
+                FieldSpec fieldSpec = FieldSpec.builder(String.class, filedName)
+                        .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+                        .initializer("$S", filedValue)
+                        .build();
+                classBuilder.addField(fieldSpec);
             }
         }
         for(DataSourceClassInfo innerClass : innerClassMap.values()) {

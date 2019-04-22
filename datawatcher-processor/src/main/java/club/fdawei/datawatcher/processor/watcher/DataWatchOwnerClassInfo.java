@@ -16,7 +16,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
 import club.fdawei.datawatcher.annotation.DataWatch;
-import club.fdawei.datawatcher.processor.common.GenClassInfoDef;
+import club.fdawei.datawatcher.processor.common.ClassInfoBox;
 import club.fdawei.datawatcher.processor.common.TypeBox;
 
 /**
@@ -42,11 +42,11 @@ public class DataWatchOwnerClassInfo {
     }
 
     public String getProxySimpleName() {
-        return simpleName + GenClassInfoDef.WatcherProxy.NAME_SUFFIX;
+        return simpleName + ClassInfoBox.WatcherProxy.NAME_SUFFIX;
     }
 
     public String getCreatorSimpleName() {
-        return simpleName + GenClassInfoDef.WatcherProxyCreator.NAME_SUFFIX;
+        return simpleName + ClassInfoBox.WatcherProxyCreator.NAME_SUFFIX;
     }
 
     public void addExecutableElement(ExecutableElement executable) {
@@ -58,7 +58,7 @@ public class DataWatchOwnerClassInfo {
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .superclass(ParameterizedTypeName.get(TypeBox.ABS_WATCHER_PROXY, TypeName.get(typeElement.asType())));
 
-        watcherProxyClassBuilder.addField(TypeName.get(typeElement.asType()), GenClassInfoDef.WatcherProxy.FIELD_TARGET_NAME, Modifier.PRIVATE);
+        watcherProxyClassBuilder.addField(TypeName.get(typeElement.asType()), ClassInfoBox.WatcherProxy.FIELD_TARGET_NAME, Modifier.PRIVATE);
 
         MethodSpec watcherProxyConstructorMethod = MethodSpec.constructorBuilder()
                 .addParameter(TypeName.get(typeElement.asType()), "target")
@@ -142,12 +142,16 @@ public class DataWatchOwnerClassInfo {
         MethodSpec createWatcherProxyMethod = MethodSpec.methodBuilder("createWatcherProxy")
                 .addModifiers(Modifier.PUBLIC)
                 .returns(proxyClass)
-                .addParameter(targetClass, "target")
-                .addStatement("return new $T(target)", proxyClass)
+                .addParameter(TypeName.OBJECT, "target")
+                .beginControlFlow("if (target instanceof $T)", targetClass)
+                .addStatement("return new $T(($T) target)", proxyClass, targetClass)
+                .nextControlFlow("else")
+                .addStatement("return null")
+                .endControlFlow()
                 .build();
         TypeSpec.Builder creatorClassBuilder = TypeSpec.classBuilder(getCreatorSimpleName())
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-                .addSuperinterface(ParameterizedTypeName.get(TypeBox.I_WATCHER_PROXY_CREATOR, proxyClass, targetClass))
+                .addSuperinterface(ParameterizedTypeName.get(TypeBox.I_WATCHER_PROXY_CREATOR, proxyClass))
                 .addMethod(createWatcherProxyMethod);
         return creatorClassBuilder.build();
     }

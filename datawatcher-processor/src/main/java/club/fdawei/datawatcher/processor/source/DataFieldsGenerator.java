@@ -26,10 +26,11 @@ public class DataFieldsGenerator extends JavaClassGenerator {
         rootDataSourceMap.clear();
     }
 
-    public void addDataSource(TypeElement typeElement, String pkgName) {
-        if (typeElement == null || pkgName == null) {
+    public void addTypeWithDataSource(TypeElement typeElement) {
+        if (typeElement == null) {
             return;
         }
+        String pkgName = getPkgName(typeElement);
         String qualifiedName = typeElement.getQualifiedName().toString();
         String nameWithoutPkg = qualifiedName.replace(pkgName + ".", "");
         String[] simpleNamePath = nameWithoutPkg.split("\\.");

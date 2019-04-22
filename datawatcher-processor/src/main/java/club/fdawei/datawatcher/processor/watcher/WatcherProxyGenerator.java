@@ -11,10 +11,15 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.processing.Filer;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
 
 import club.fdawei.datawatcher.annotation.DataWatch;
 import club.fdawei.datawatcher.processor.common.CommonTag;
@@ -34,14 +39,68 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
         dataWatchOwnerMap.clear();
     }
 
-    public void addExecutableElement(ExecutableElement executableElement, String pkgName) {
+    public void addExecutableWithDataWatch(ExecutableElement executableElement) {
         if (!checkExecutableElementValid(executableElement)) {
             return;
         }
         TypeElement typeElement = (TypeElement) executableElement.getEnclosingElement();
+        addExecutableReal(typeElement, executableElement);
+    }
+
+    public void addTypeWithDataWatcher(TypeElement typeElement) {
+        final Map<String, ExecutableElement> executableMap = new LinkedHashMap<>();
+        //查找被@DataWatch注解的方法
+        for (Element element : typeElement.getEnclosedElements()) {
+            if (element.getKind() != ElementKind.METHOD) {
+                continue;
+            }
+            ExecutableElement executableElement = (ExecutableElement) element;
+            if (!checkExecutableElementValid(executableElement)) {
+                continue;
+            }
+            executableMap.put(executableElement.getSimpleName().toString(), executableElement);
+        }
+
+        //查找父类被@DataWatch注解的方法
+        TypeMirror superTypeMirror = typeElement.getSuperclass();
+        while (superTypeMirror != null && superTypeMirror.getKind() != TypeKind.NONE
+                && !TypeName.get(superTypeMirror).equals(TypeName.OBJECT)) {
+            if (superTypeMirror.getKind() != TypeKind.DECLARED) {
+                break;
+            }
+            DeclaredType superDeclaredType = (DeclaredType) superTypeMirror;
+            Element superElement = superDeclaredType.asElement();
+            if (superElement.getKind() != ElementKind.CLASS) {
+                break;
+            }
+            TypeElement superTypeElement = (TypeElement) superElement;
+            for (Element element : superTypeElement.getEnclosedElements()) {
+                if (element.getKind() != ElementKind.METHOD) {
+                    continue;
+                }
+                ExecutableElement executableElement = (ExecutableElement) element;
+                if (!checkExecutableElementValid(executableElement)) {
+                    continue;
+                }
+                String methodName = executableElement.getSimpleName().toString();
+                if (executableMap.containsKey(methodName)) {
+                    //子类已经覆盖，忽略
+                    continue;
+                }
+                executableMap.put(methodName, executableElement);
+            }
+            superTypeMirror = superTypeElement.getSuperclass();
+        }
+
+        for (ExecutableElement executableElement : executableMap.values()) {
+            addExecutableReal(typeElement, executableElement);
+        }
+    }
+
+    public void addExecutableReal(TypeElement typeElement, ExecutableElement executableElement) {
         DataWatchOwnerClassInfo dataWatchOwner = dataWatchOwnerMap.get(typeElement);
         if (dataWatchOwner == null) {
-            dataWatchOwner = new DataWatchOwnerClassInfo(pkgName, typeElement);
+            dataWatchOwner = new DataWatchOwnerClassInfo(getPkgName(typeElement), typeElement);
             dataWatchOwnerMap.put(typeElement, dataWatchOwner);
         }
         dataWatchOwner.addExecutableElement(executableElement);
@@ -89,6 +148,11 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
         //check method
         if (!executableElement.getModifiers().contains(Modifier.PUBLIC)) {
             logw(TAG, "Method %s with @DataWatch should be public", methodName);
+            return false;
+        }
+        //check method return
+        if (!TypeName.get(executableElement.getReturnType()).equals(TypeName.VOID)) {
+            logw(TAG, "Method %s with @DataWatch return should be void", methodName);
             return false;
         }
         //check method parameter

@@ -1,22 +1,17 @@
 package club.fdawei.datawatcher.plugin
 
-import club.fdawei.datawatcher.plugin.common.ClassInfoDef
+import club.fdawei.datawatcher.plugin.common.ClassInfoBox
 import club.fdawei.datawatcher.plugin.injector.DataWatcherInjector
 import club.fdawei.datawatcher.plugin.injector.InjectClassInfo
 import club.fdawei.datawatcher.plugin.injector.InjectInfo
 import club.fdawei.datawatcher.plugin.log.PluginLogger
 import club.fdawei.datawatcher.plugin.util.JarUtils
-import com.android.build.api.transform.DirectoryInput
-import com.android.build.api.transform.Format
-import com.android.build.api.transform.JarInput
-import com.android.build.api.transform.Status
-import com.android.build.api.transform.TransformInvocation
+import com.android.build.api.transform.*
 import com.android.ide.common.internal.WaitableExecutor
 import com.android.utils.FileUtils
 import org.apache.commons.codec.digest.DigestUtils
 
 import java.util.jar.JarFile
-
 
 class TransformHandler {
 
@@ -94,9 +89,9 @@ class TransformHandler {
                 break
             case InjectInfo.Type.FILE_LIST:
                 if (injectInfo.classInfoList != null) {
-                    for (InjectClassInfo classInfo : injectInfo.classInfoList) {
-                        def sourceFile = new File(injectInfo.sourceDir, classInfo.name)
-                        def destFile = new File(injectInfo.destFile, classInfo.name)
+                    injectInfo.classInfoList.each {
+                        def sourceFile = new File(injectInfo.sourceDir, it.name)
+                        def destFile = new File(injectInfo.destFile, it.name)
                         if (destFile.exists()) {
                             destFile.delete()
                         }
@@ -150,9 +145,9 @@ class TransformHandler {
     }
 
     private static InjectClassInfo findClassNeedInjectFromClass(File classFile, File dir) {
-        if (ClassInfoDef.DataFields.isDataFields(classFile.name)) {
+        if (ClassInfoBox.DataFields.isDataFields(classFile.name)) {
             return new InjectClassInfo(FileUtils.relativePath(classFile, dir), InjectClassInfo.Type.DATAFIELDS)
-        } else if (ClassInfoDef.WatcherProxy.isWatcherProxy(classFile.name)) {
+        } else if (ClassInfoBox.WatcherProxy.isWatcherProxy(classFile.name)) {
             return new InjectClassInfo(FileUtils.relativePath(classFile, dir), InjectClassInfo.Type.WATCHERPROXY)
         }
         return null
@@ -166,10 +161,10 @@ class TransformHandler {
                     if (file.directory) {
                         return
                     }
-                    if (ClassInfoDef.DataFields.isDataFields(file.name)) {
+                    if (ClassInfoBox.DataFields.isDataFields(file.name)) {
                         def classInfo = new InjectClassInfo(FileUtils.relativePath(file, dir), InjectClassInfo.Type.DATAFIELDS)
                         classInfoList.add(classInfo)
-                    } else if (ClassInfoDef.WatcherProxy.isWatcherProxy(file.name)) {
+                    } else if (ClassInfoBox.WatcherProxy.isWatcherProxy(file.name)) {
                         def classInfo = new InjectClassInfo(FileUtils.relativePath(file, dir), InjectClassInfo.Type.WATCHERPROXY)
                         classInfoList.add(classInfo)
                     }
@@ -227,10 +222,10 @@ class TransformHandler {
             if (jarEntry.isDirectory()) {
                 continue
             }
-            if (ClassInfoDef.DataFields.isDataFields(jarEntry.name)) {
+            if (ClassInfoBox.DataFields.isDataFields(jarEntry.name)) {
                 def classInfo = new InjectClassInfo(jarEntry.name, InjectClassInfo.Type.DATAFIELDS)
                 classInfoList.add(classInfo)
-            } else if (ClassInfoDef.WatcherProxy.isWatcherProxy(jarEntry.name)) {
+            } else if (ClassInfoBox.WatcherProxy.isWatcherProxy(jarEntry.name)) {
                 def classInfo = new InjectClassInfo(jarEntry.name, InjectClassInfo.Type.WATCHERPROXY)
                 classInfoList.add(classInfo)
             }

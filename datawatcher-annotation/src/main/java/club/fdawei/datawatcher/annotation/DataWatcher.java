@@ -5,8 +5,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Create by david on 2019/04/22
+ */
+
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.TYPE)
-public @interface DataSource {
-    boolean setterAutoFind() default true;
+public @interface DataWatcher {
 }
