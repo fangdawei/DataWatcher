@@ -6,7 +6,7 @@ import android.support.annotation.Nullable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import club.fdawei.datawatcher.api.common.GenClassInfoDef;
+import club.fdawei.datawatcher.api.common.ClassInfoBox;
 import club.fdawei.datawatcher.api.log.Logger;
 
 public class WatcherProxyFactory {
@@ -33,7 +33,7 @@ public class WatcherProxyFactory {
             synchronized (WatcherProxyFactory.class) {
                 creator = watcherProxyCreatorMap.get(targetClass);
                 if (creator == null) {
-                    final String creatorClassName = targetClass.getName() + GenClassInfoDef.WatcherProxyCreator.NAME_SUFFIX;
+                    final String creatorClassName = targetClass.getName() + ClassInfoBox.WatcherProxyCreator.NAME_SUFFIX;
                     try {
                         creator = (IWatcherProxyCreator) Class.forName(creatorClassName).newInstance();
                     } catch (Exception e) {

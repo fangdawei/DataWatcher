@@ -1,6 +1,6 @@
 package club.fdawei.datawatcher.processor.common;
 
-public final class GenClassInfoDef {
+public final class ClassInfoBox {
 
     public static final class DataFields {
         public static final String NAME_PREFIX = "fields_";

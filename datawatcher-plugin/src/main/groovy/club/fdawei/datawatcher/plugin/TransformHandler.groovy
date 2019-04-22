@@ -1,6 +1,6 @@
 package club.fdawei.datawatcher.plugin
 
-import club.fdawei.datawatcher.plugin.common.ClassInfoDef
+import club.fdawei.datawatcher.plugin.common.ClassInfoBox
 import club.fdawei.datawatcher.plugin.injector.DataWatcherInjector
 import club.fdawei.datawatcher.plugin.injector.InjectClassInfo
 import club.fdawei.datawatcher.plugin.injector.InjectInfo
@@ -145,9 +145,9 @@ class TransformHandler {
     }
 
     private static InjectClassInfo findClassNeedInjectFromClass(File classFile, File dir) {
-        if (ClassInfoDef.DataFields.isDataFields(classFile.name)) {
+        if (ClassInfoBox.DataFields.isDataFields(classFile.name)) {
             return new InjectClassInfo(FileUtils.relativePath(classFile, dir), InjectClassInfo.Type.DATAFIELDS)
-        } else if (ClassInfoDef.WatcherProxy.isWatcherProxy(classFile.name)) {
+        } else if (ClassInfoBox.WatcherProxy.isWatcherProxy(classFile.name)) {
             return new InjectClassInfo(FileUtils.relativePath(classFile, dir), InjectClassInfo.Type.WATCHERPROXY)
         }
         return null
@@ -161,10 +161,10 @@ class TransformHandler {
                     if (file.directory) {
                         return
                     }
-                    if (ClassInfoDef.DataFields.isDataFields(file.name)) {
+                    if (ClassInfoBox.DataFields.isDataFields(file.name)) {
                         def classInfo = new InjectClassInfo(FileUtils.relativePath(file, dir), InjectClassInfo.Type.DATAFIELDS)
                         classInfoList.add(classInfo)
-                    } else if (ClassInfoDef.WatcherProxy.isWatcherProxy(file.name)) {
+                    } else if (ClassInfoBox.WatcherProxy.isWatcherProxy(file.name)) {
                         def classInfo = new InjectClassInfo(FileUtils.relativePath(file, dir), InjectClassInfo.Type.WATCHERPROXY)
                         classInfoList.add(classInfo)
                     }
@@ -222,10 +222,10 @@ class TransformHandler {
             if (jarEntry.isDirectory()) {
                 continue
             }
-            if (ClassInfoDef.DataFields.isDataFields(jarEntry.name)) {
+            if (ClassInfoBox.DataFields.isDataFields(jarEntry.name)) {
                 def classInfo = new InjectClassInfo(jarEntry.name, InjectClassInfo.Type.DATAFIELDS)
                 classInfoList.add(classInfo)
-            } else if (ClassInfoDef.WatcherProxy.isWatcherProxy(jarEntry.name)) {
+            } else if (ClassInfoBox.WatcherProxy.isWatcherProxy(jarEntry.name)) {
                 def classInfo = new InjectClassInfo(jarEntry.name, InjectClassInfo.Type.WATCHERPROXY)
                 classInfoList.add(classInfo)
             }

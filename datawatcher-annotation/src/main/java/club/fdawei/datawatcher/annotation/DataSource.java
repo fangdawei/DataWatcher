@@ -8,5 +8,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.TYPE)
 public @interface DataSource {
-    boolean autoFindSetter() default true;
+    boolean setterAutoFind() default true;
 }
