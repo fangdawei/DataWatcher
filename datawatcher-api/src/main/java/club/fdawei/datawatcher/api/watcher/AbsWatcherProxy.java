@@ -5,13 +5,15 @@ import android.support.annotation.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 
 public abstract class AbsWatcherProxy<TARGET> implements IWatcherProxy {
 
     private WeakReference<TARGET> targetRef;
-    private final Map<String, WatcherNotifyPublisher> publisherMap = new HashMap<>();
+    private final Map<String, List<WatcherNotifyPublisher>> publisherMap = new HashMap<>();
 
     public AbsWatcherProxy(TARGET target) {
         this.targetRef = new WeakReference<>(target);
@@ -35,7 +37,12 @@ public abstract class AbsWatcherProxy<TARGET> implements IWatcherProxy {
         if (publisher == null) {
             return;
         }
-        publisherMap.put(fieldKey, publisher);
+        List<WatcherNotifyPublisher> publisherList = publisherMap.get(fieldKey);
+        if (publisherList == null) {
+            publisherList = new LinkedList<>();
+            publisherMap.put(fieldKey, publisherList);
+        }
+        publisherList.add(publisher);
     }
 
     @Override
@@ -43,13 +50,31 @@ public abstract class AbsWatcherProxy<TARGET> implements IWatcherProxy {
         dispatchDataChange(source, fieldKey, oldValue, newValue);
     }
 
-    public void dispatchDataChange(Object source, String fieldKey, Object oldValue, Object newValue) {
+    @Override
+    public void onDataBind(Object source, String fieldKey, Object value) {
+        dispatchDataBind(source, fieldKey, value);
+    }
+
+    private void dispatchDataChange(Object source, String fieldKey, Object oldValue, Object newValue) {
         if (!isTargetAlive()) {
             return;
         }
-        WatcherNotifyPublisher publisher = publisherMap.get(fieldKey);
-        if (publisher != null) {
-            publisher.notifyWatcher(source, oldValue, newValue);
+        List<WatcherNotifyPublisher> publisherList = publisherMap.get(fieldKey);
+        if (publisherList != null) {
+            for (WatcherNotifyPublisher publisher : publisherList) {
+                publisher.notifyWatcher(source, oldValue, newValue);
+            }
+        }
+    }
+
+    private void dispatchDataBind(Object source, String fieldKey, Object value) {
+        List<WatcherNotifyPublisher> publisherList = publisherMap.get(fieldKey);
+        if (publisherList != null) {
+            for (WatcherNotifyPublisher publisher : publisherList) {
+                if (publisher.isNeedNotifyWhenBind()) {
+                    publisher.notifyWatcher(source, null, value);
+                }
+            }
         }
     }
 
@@ -64,15 +89,6 @@ public abstract class AbsWatcherProxy<TARGET> implements IWatcherProxy {
     @Override
     public boolean isTargetAlive() {
         return targetRef.get() != null;
-    }
-
-    @Override
-    public boolean needNotifyWhenBind(String fieldKey) {
-        WatcherNotifyPublisher publisher = publisherMap.get(fieldKey);
-        if (publisher == null) {
-            return true;
-        }
-        return publisher.isNeedNotifyWhenBind();
     }
 
     @Override

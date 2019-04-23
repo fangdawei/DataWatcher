@@ -17,10 +17,14 @@ public class DataBinder implements IDataBinder {
     }
 
     @Override
-    public void notifyWatcher(String fieldKey, Object oldValue, Object newValue) {
+    public void onDataChanged(String fieldKey, Object oldValue, Object newValue) {
         if (!isValueChanged(oldValue, newValue)) {
             return;
         }
+        notifyWatcher(fieldKey, oldValue, newValue);
+    }
+
+    private void notifyWatcher(String fieldKey, Object oldValue, Object newValue) {
         for (IWatcherProxy watcher : watcherSet) {
             watcher.onDataChanged(source, fieldKey, oldValue, newValue);
         }
@@ -32,9 +36,7 @@ public class DataBinder implements IDataBinder {
             return;
         }
         for (Map.Entry<String, Object> fieldEntry : allFieldValueMap.entrySet()) {
-            if (watcher.needNotifyWhenBind(fieldEntry.getKey())) {
-                watcher.onDataChanged(source, fieldEntry.getKey(), null, fieldEntry.getValue());
-            }
+            watcher.onDataBind(source, fieldEntry.getKey(), fieldEntry.getValue());
         }
     }
 

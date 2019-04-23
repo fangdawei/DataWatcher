@@ -8,7 +8,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.METHOD)
-@Inherited
 public @interface DataWatch {
 
     String field();

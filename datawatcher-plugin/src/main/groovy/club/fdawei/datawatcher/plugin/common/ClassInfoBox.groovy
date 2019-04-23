@@ -36,6 +36,7 @@ final class ClassInfoBox {
 
     static final class DataBinder {
         static final String NAME = 'club.fdawei.datawatcher.api.data.DataBinder'
+        static final String METHOD_ON_DATA_CHANGED_NAME = 'onDataChanged'
     }
 
     static final class ChangeEvent {

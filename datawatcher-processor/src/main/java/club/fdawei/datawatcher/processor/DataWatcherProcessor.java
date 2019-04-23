@@ -2,7 +2,7 @@ package club.fdawei.datawatcher.processor;
 
 import club.fdawei.datawatcher.annotation.DataSource;
 import club.fdawei.datawatcher.annotation.DataWatch;
-import club.fdawei.datawatcher.annotation.DataWatcher;
+import club.fdawei.datawatcher.annotation.InheritWatch;
 import club.fdawei.datawatcher.processor.common.CommonTag;
 import club.fdawei.datawatcher.processor.log.Logger;
 import club.fdawei.datawatcher.processor.source.DataFieldsGenerator;
@@ -56,7 +56,7 @@ public class DataWatcherProcessor extends AbstractProcessor {
         Set<String> types = new LinkedHashSet<>();
         types.add(DataSource.class.getCanonicalName());
         types.add(DataWatch.class.getCanonicalName());
-        types.add(DataWatcher.class.getCanonicalName());
+        types.add(InheritWatch.class.getCanonicalName());
         return types;
     }
 
@@ -108,17 +108,17 @@ public class DataWatcherProcessor extends AbstractProcessor {
     }
 
     private void collectDataWatcher(RoundEnvironment roundEnvironment) {
-        Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(DataWatcher.class);
+        Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(InheritWatch.class);
         if (elements == null) {
             return;
         }
         for(Element element : elements) {
             if (element.getKind() != ElementKind.CLASS) {
-                mLogger.logw(TAG, "Only class can be annotated with @%s", DataWatcher.class.getSimpleName());
+                mLogger.logw(TAG, "Only class can be annotated with @%s", InheritWatch.class.getSimpleName());
                 continue;
             }
             TypeElement typeElement = (TypeElement) element;
-            watcherProxyGenerator.addTypeWithDataWatcher(typeElement);
+            watcherProxyGenerator.addTypeWithInheritWatch(typeElement);
         }
     }
 }

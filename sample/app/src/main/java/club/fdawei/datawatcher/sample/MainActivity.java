@@ -13,10 +13,10 @@ import club.fdawei.datawatcher.annotation.DataWatch;
 import club.fdawei.datawatcher.api.DataWatcher;
 import club.fdawei.datawatcher.sample.data.UserInfo;
 import club.fdawei.datawatcher.sample.data.fields_UserInfo;
-import club.fdawei.datawatcher.sample.sub.ChildCountryWatcher;
 import club.fdawei.datawatcher.sample.sub.Country;
 import club.fdawei.datawatcher.api.data.ChangeEvent;
 import club.fdawei.datawatcher.sample.sub.CountryWatcher;
+import club.fdawei.datawatcher.sample.sub.CountryWatcherFinal;
 import club.fdawei.datawatcher.sample.test.Tester;
 
 public class MainActivity extends AppCompatActivity {
@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private CountryWatcher countryWatcher;
     private CountryWatcher.ProvinceWatcher provinceWatcher;
     private CountryWatcher.ProvinceWatcher.CityWatcher cityWatcher;
-    private ChildCountryWatcher childCountryWatcher;
+    private CountryWatcherFinal countryWatcherFinal;
     private Tester tester = new Tester();
 
     @Override
@@ -55,13 +55,13 @@ public class MainActivity extends AppCompatActivity {
         countryWatcher = new CountryWatcher(getBaseContext());
         provinceWatcher = new CountryWatcher.ProvinceWatcher(getBaseContext());
         cityWatcher = new CountryWatcher.ProvinceWatcher.CityWatcher(getBaseContext());
-        childCountryWatcher = new ChildCountryWatcher(getBaseContext());
+        countryWatcherFinal = new CountryWatcherFinal(getBaseContext());
 
         DataWatcher.bind(this, userInfo);
         DataWatcher.bind(countryWatcher, country);
         DataWatcher.bind(provinceWatcher, province);
         DataWatcher.bind(cityWatcher, city);
-        DataWatcher.bind(childCountryWatcher, country);
+        DataWatcher.bind(countryWatcherFinal, country);
     }
 
     @Override
@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
         DataWatcher.unbindAll(countryWatcher);
         DataWatcher.unbindAll(provinceWatcher);
         DataWatcher.unbindAll(cityWatcher);
-        DataWatcher.unbindAll(childCountryWatcher);
+        DataWatcher.unbindAll(countryWatcherFinal);
         super.onDestroy();
     }
 
