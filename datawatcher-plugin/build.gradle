@@ -1,5 +1,6 @@
 apply plugin: 'groovy'
 apply plugin: 'maven'
+apply plugin: 'com.novoda.bintray-release'
 
 
 dependencies {
@@ -18,7 +19,6 @@ repositories {
     mavenCentral()
 }
 
-
 //打包到本地或者远程Maven库
 uploadArchives {
     repositories {
@@ -35,4 +35,19 @@ uploadArchives {
             pom.version = '1.0.0'
         }
     }
+}
+
+publish {
+    repoName = 'maven'
+    userOrg = 'fangdawei'
+    groupId = 'club.fdawei.datawatcher'
+    artifactId = 'datawatcher-plugin'
+    publishVersion = '1.0.0'
+    desc = 'DataWatcher'
+}
+
+tasks.withType(Javadoc) {//防止编码问题
+    options.addStringOption('Xdoclint:none', '-quiet')
+    options.addStringOption('encoding', 'UTF-8')
+    options.addStringOption('charSet', 'UTF-8')
 }

@@ -1,5 +1,7 @@
 apply plugin: 'java-library'
 apply plugin: 'maven'
+apply plugin: 'com.novoda.bintray-release'
+
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
@@ -12,7 +14,6 @@ dependencies {
 sourceCompatibility = "8"
 targetCompatibility = "8"
 
-
 uploadArchives {
     repositories {
         mavenDeployer {
@@ -22,5 +23,20 @@ uploadArchives {
             pom.version = '1.0.0'
         }
     }
+}
+
+publish {
+    repoName = 'maven'
+    userOrg = 'fangdawei'
+    groupId = 'club.fdawei.datawatcher'
+    artifactId = 'datawatcher-processor'
+    publishVersion = '1.0.0'
+    desc = 'DataWatcher'
+}
+
+tasks.withType(Javadoc) {//防止编码问题
+    options.addStringOption('Xdoclint:none', '-quiet')
+    options.addStringOption('encoding', 'UTF-8')
+    options.addStringOption('charSet', 'UTF-8')
 }
 
