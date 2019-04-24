@@ -19,10 +19,6 @@ repositories {
 }
 
 
-//group和version
-group = 'club.fdawei.datawatcher'
-version = '1.0.0'
-
 //打包到本地或者远程Maven库
 uploadArchives {
     repositories {
@@ -33,7 +29,10 @@ uploadArchives {
             // }
 
             //提交到本地仓库
-            repository(url: uri("${local_maven_repo}"))
+            repository(url: uri("${rootProject.localRepoPath}"))
+            pom.groupId = "club.fdawei.datawatcher"
+            pom.artifactId = "datawatcher-plugin"
+            pom.version = '1.0.0'
         }
     }
 }

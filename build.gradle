@@ -2,7 +2,7 @@
 
 buildscript {
     repositories {
-        maven { url uri("${local_maven_repo}")}
+        maven { url uri("${rootProject.localRepoPath}")}
         google()
         jcenter()
     }
@@ -12,13 +12,16 @@ buildscript {
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
 
-        classpath 'club.fdawei.datawatcher:datawatcher-plugin:1.0.0'
+        def localRepoDir = new File(rootProject.localRepoPath)
+        if (localRepoDir.exists()) {
+            classpath 'club.fdawei.datawatcher:datawatcher-plugin:1.0.0'
+        }
     }
 }
 
 allprojects {
     repositories {
-        maven { url uri("${local_maven_repo}") }
+        maven { url uri("${rootProject.localRepoPath}") }
         google()
         jcenter()
     }

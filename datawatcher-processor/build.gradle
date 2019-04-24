@@ -13,15 +13,13 @@ sourceCompatibility = "8"
 targetCompatibility = "8"
 
 
-group = 'club.fdawei.datawatcher'
-version = '1.0.0'
-
-//打包到本地或者远程Maven库
 uploadArchives {
     repositories {
         mavenDeployer {
-            //提交到本地仓库
-            repository(url: uri("${local_maven_repo}"))
+            repository(url: uri("${rootProject.localRepoPath}"))
+            pom.groupId = "club.fdawei.datawatcher"
+            pom.artifactId = "datawatcher-processor"
+            pom.version = '1.0.0'
         }
     }
 }

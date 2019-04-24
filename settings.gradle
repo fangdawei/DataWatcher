@@ -2,3 +2,9 @@ include ':datawatcher-annotation', ':datawatcher-processor', ':datawatcher-api',
 include ':app', ':sub'
 project(':app').projectDir = new File('sample/app')
 project(':sub').projectDir = new File('sample/sub')
+
+
+gradle.projectsLoaded {
+    def localRepoDir = new File(rootDir, 'local-repo')
+    gradle.rootProject.ext.localRepoPath = localRepoDir.absolutePath
+}
