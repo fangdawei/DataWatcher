@@ -12,7 +12,7 @@ public class Tester {
     private static final String TAG = "Tester";
 
     private static final int DATA_TEST_TASK_COUNT = 50;
-    private static final int BIND_TEST_TASK_COUNT = 20;
+    private static final int BIND_TEST_TASK_COUNT = 40;
 
     public volatile boolean running = false;
     private UserInfo commonData = new UserInfo();

@@ -153,14 +153,14 @@ class DataSourceHandler extends ClassHandler {
                                 .append("${wrapperTypeName} _oldValue = new ${wrapperTypeName}(this.${f.field.name});")
                                 .append("${wrapperTypeName} _newValue = new ${wrapperTypeName}(\$1);")
                                 .append("\$proceed(\$\$);")
-                                .append("dataBinder.notifyWatcher(${fieldsCtClass.name}.${f.field.name}, _oldValue, _newValue);")
+                                .append("this.dataBinder.${ClassInfoBox.DataBinder.METHOD_ON_DATA_CHANGED_NAME}(${fieldsCtClass.name}.${f.field.name}, _oldValue, _newValue);")
                                 .toString()
                     } else {
                         replaceSrc = new StringBuilder()
                                 .append("${f.field.type.name} _oldValue = this.${f.field.name};")
                                 .append("${f.field.type.name} _newValue = \$1;")
                                 .append("\$proceed(\$\$);")
-                                .append("this.dataBinder.notifyWatcher(${fieldsCtClass.name}.${f.field.name}, _oldValue, _newValue);")
+                                .append("this.dataBinder.${ClassInfoBox.DataBinder.METHOD_ON_DATA_CHANGED_NAME}(${fieldsCtClass.name}.${f.field.name}, _oldValue, _newValue);")
                                 .toString()
                     }
                     f.replace(replaceSrc)

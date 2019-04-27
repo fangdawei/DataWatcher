@@ -1,17 +1,17 @@
 package club.fdawei.datawatcher.annotation;
 
 import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.METHOD)
-@Inherited
 public @interface DataWatch {
 
     String field();
+
+    Class data() default Object.class;
 
     int thread() default Thread.CURRENT;
 

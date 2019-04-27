@@ -3,7 +3,7 @@ package club.fdawei.datawatcher.api.data;
 
 public interface IDataBinder {
 
-    void notifyWatcher(String fieldKey, Object oldValue, Object newValue);
+    void onDataChanged(String fieldKey, Object oldValue, Object newValue);
 
     void addWatcher(Object target);
 

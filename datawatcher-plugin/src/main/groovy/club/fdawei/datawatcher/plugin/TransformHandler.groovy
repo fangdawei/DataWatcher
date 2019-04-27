@@ -139,38 +139,9 @@ class TransformHandler {
                 injectInfo.setClassInfoList(classInfoList)
                 addInjectInfo(injectInfo)
             } else {
-                FileUtils.copyDirectory(dirInput, destDir)
+                FileUtils.copyDirectory(dirInput.file, destDir)
             }
         }
-    }
-
-    private static InjectClassInfo findClassNeedInjectFromClass(File classFile, File dir) {
-        if (ClassInfoBox.DataFields.isDataFields(classFile.name)) {
-            return new InjectClassInfo(FileUtils.relativePath(classFile, dir), InjectClassInfo.Type.DATAFIELDS)
-        } else if (ClassInfoBox.WatcherProxy.isWatcherProxy(classFile.name)) {
-            return new InjectClassInfo(FileUtils.relativePath(classFile, dir), InjectClassInfo.Type.WATCHERPROXY)
-        }
-        return null
-    }
-
-    private static List<InjectClassInfo> findClassNeedInjectFromDir(File dir) {
-        final List<InjectClassInfo> classInfoList = new LinkedList<>()
-        if (dir.exists()) {
-            dir.eachFileRecurse {
-                file ->
-                    if (file.directory) {
-                        return
-                    }
-                    if (ClassInfoBox.DataFields.isDataFields(file.name)) {
-                        def classInfo = new InjectClassInfo(FileUtils.relativePath(file, dir), InjectClassInfo.Type.DATAFIELDS)
-                        classInfoList.add(classInfo)
-                    } else if (ClassInfoBox.WatcherProxy.isWatcherProxy(file.name)) {
-                        def classInfo = new InjectClassInfo(FileUtils.relativePath(file, dir), InjectClassInfo.Type.WATCHERPROXY)
-                        classInfoList.add(classInfo)
-                    }
-            }
-        }
-        return classInfoList
     }
 
     private void handleJar(JarInput jarInput) {
@@ -211,6 +182,35 @@ class TransformHandler {
             addClassPath(jarInput.file.absolutePath)
             FileUtils.copyFile(jarInput.file, dest)
         }
+    }
+
+    private static InjectClassInfo findClassNeedInjectFromClass(File classFile, File dir) {
+        if (ClassInfoBox.DataFields.isDataFields(classFile.name)) {
+            return new InjectClassInfo(FileUtils.relativePath(classFile, dir), InjectClassInfo.Type.DATAFIELDS)
+        } else if (ClassInfoBox.WatcherProxy.isWatcherProxy(classFile.name)) {
+            return new InjectClassInfo(FileUtils.relativePath(classFile, dir), InjectClassInfo.Type.WATCHERPROXY)
+        }
+        return null
+    }
+
+    private static List<InjectClassInfo> findClassNeedInjectFromDir(File dir) {
+        final List<InjectClassInfo> classInfoList = new LinkedList<>()
+        if (dir.exists()) {
+            dir.eachFileRecurse {
+                file ->
+                    if (file.directory) {
+                        return
+                    }
+                    if (ClassInfoBox.DataFields.isDataFields(file.name)) {
+                        def classInfo = new InjectClassInfo(FileUtils.relativePath(file, dir), InjectClassInfo.Type.DATAFIELDS)
+                        classInfoList.add(classInfo)
+                    } else if (ClassInfoBox.WatcherProxy.isWatcherProxy(file.name)) {
+                        def classInfo = new InjectClassInfo(FileUtils.relativePath(file, dir), InjectClassInfo.Type.WATCHERPROXY)
+                        classInfoList.add(classInfo)
+                    }
+            }
+        }
+        return classInfoList
     }
 
     private static List<InjectClassInfo> findClassNeedInjectFromJar(String jarPath) {

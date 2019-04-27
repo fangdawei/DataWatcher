@@ -1,15 +1,16 @@
 apply plugin: 'groovy'
 apply plugin: 'maven'
+apply plugin: 'com.novoda.bintray-release'
 
 
 dependencies {
-    compileOnly 'com.android.tools.build:gradle:3.3.2'
+    compileOnly "com.android.tools.build:gradle:$gradle_version"
     //gradle sdk
     compileOnly gradleApi()
     //groovy sdk
     compileOnly localGroovy()
 
-    implementation 'com.android.tools.build:gradle-api:2.3.0'
+    implementation "com.android.tools.build:gradle-api:$gradle_version"
     implementation 'org.javassist:javassist:3.24.1-GA'
 }
 
@@ -18,8 +19,6 @@ repositories {
     mavenCentral()
 }
 
-
-//group和version
 group = 'club.fdawei.datawatcher'
 version = '1.0.0'
 
@@ -33,7 +32,25 @@ uploadArchives {
             // }
 
             //提交到本地仓库
-            repository(url: uri("${local_maven_repo}"))
+            repository(url: uri("${rootProject.localRepoPath}"))
+            pom.groupId = "club.fdawei.datawatcher"
+            pom.artifactId = "datawatcher-plugin"
+            pom.version = '1.0.0'
         }
     }
+}
+
+publish {
+    repoName = 'maven'
+    userOrg = 'fangdawei'
+    groupId = 'club.fdawei.datawatcher'
+    artifactId = 'datawatcher-plugin'
+    publishVersion = '1.0.0'
+    desc = 'DataWatcher'
+}
+
+tasks.withType(Javadoc) {//防止编码问题
+    options.addStringOption('Xdoclint:none', '-quiet')
+    options.addStringOption('encoding', 'UTF-8')
+    options.addStringOption('charSet', 'UTF-8')
 }

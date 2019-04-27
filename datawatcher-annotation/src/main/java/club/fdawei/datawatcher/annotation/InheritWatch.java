@@ -11,5 +11,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.TYPE)
-public @interface DataWatcher {
+public @interface InheritWatch {
+    int maxGenerations() default 0;
 }

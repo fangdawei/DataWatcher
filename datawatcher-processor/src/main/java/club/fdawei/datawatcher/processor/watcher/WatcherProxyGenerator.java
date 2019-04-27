@@ -22,6 +22,7 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 import club.fdawei.datawatcher.annotation.DataWatch;
+import club.fdawei.datawatcher.annotation.InheritWatch;
 import club.fdawei.datawatcher.processor.common.CommonTag;
 import club.fdawei.datawatcher.processor.common.JavaClassGenerator;
 import club.fdawei.datawatcher.processor.common.TypeBox;
@@ -40,14 +41,19 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
     }
 
     public void addExecutableWithDataWatch(ExecutableElement executableElement) {
-        if (!checkExecutableElementValid(executableElement)) {
+        if (!checkExecutableWithDataWatchValid(executableElement)) {
             return;
         }
         TypeElement typeElement = (TypeElement) executableElement.getEnclosingElement();
         addExecutableReal(typeElement, executableElement);
     }
 
-    public void addTypeWithDataWatcher(TypeElement typeElement) {
+    public void addTypeWithInheritWatch(TypeElement typeElement) {
+        InheritWatch inheritWatch = typeElement.getAnnotation(InheritWatch.class);
+        if (inheritWatch == null) {
+            return;
+        }
+        final int maxGenerations = inheritWatch.maxGenerations() > 0 ? inheritWatch.maxGenerations() : Integer.MAX_VALUE;
         final Map<String, ExecutableElement> executableMap = new LinkedHashMap<>();
         //查找被@DataWatch注解的方法
         for (Element element : typeElement.getEnclosedElements()) {
@@ -55,7 +61,7 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
                 continue;
             }
             ExecutableElement executableElement = (ExecutableElement) element;
-            if (!checkExecutableElementValid(executableElement)) {
+            if (!checkExecutableWithDataWatchValid(executableElement)) {
                 continue;
             }
             executableMap.put(executableElement.getSimpleName().toString(), executableElement);
@@ -63,7 +69,9 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
 
         //查找父类被@DataWatch注解的方法
         TypeMirror superTypeMirror = typeElement.getSuperclass();
-        while (superTypeMirror != null && superTypeMirror.getKind() != TypeKind.NONE
+        int currGeneration = 1;
+        while (currGeneration <= maxGenerations && superTypeMirror != null
+                && superTypeMirror.getKind() != TypeKind.NONE
                 && !TypeName.get(superTypeMirror).equals(TypeName.OBJECT)) {
             if (superTypeMirror.getKind() != TypeKind.DECLARED) {
                 break;
@@ -79,7 +87,7 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
                     continue;
                 }
                 ExecutableElement executableElement = (ExecutableElement) element;
-                if (!checkExecutableElementValid(executableElement)) {
+                if (!checkExecutableWithDataWatchValid(executableElement)) {
                     continue;
                 }
                 String methodName = executableElement.getSimpleName().toString();
@@ -90,6 +98,7 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
                 executableMap.put(methodName, executableElement);
             }
             superTypeMirror = superTypeElement.getSuperclass();
+            currGeneration++;
         }
 
         for (ExecutableElement executableElement : executableMap.values()) {
@@ -135,7 +144,7 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
         }
     }
 
-    private boolean checkExecutableElementValid(ExecutableElement executableElement) {
+    private boolean checkExecutableWithDataWatchValid(ExecutableElement executableElement) {
         if (executableElement == null) {
             return false;
         }
@@ -157,7 +166,7 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
         }
         //check method parameter
         List<? extends VariableElement> parameters = executableElement.getParameters();
-        if (parameters == null || parameters.size() != 1) {
+        if (parameters.size() != 1) {
             logw(TAG, "Method %s with @DataWatch but parameter illegal", methodName);
             return false;
         }

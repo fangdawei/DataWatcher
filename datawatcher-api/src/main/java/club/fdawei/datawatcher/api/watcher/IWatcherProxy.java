@@ -6,7 +6,7 @@ package club.fdawei.datawatcher.api.watcher;
 public interface IWatcherProxy {
     void onDataChanged(Object source, String fieldKey, Object oldValue, Object newValue);
 
-    boolean needNotifyWhenBind(String fieldKey);
+    void onDataBind(Object source, String fieldKey, Object value);
 
     boolean isBlongTarget(Object target);
 
