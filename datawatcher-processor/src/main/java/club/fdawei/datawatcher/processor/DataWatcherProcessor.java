@@ -67,13 +67,15 @@ public class DataWatcherProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
-        dataFieldsGenerator.clear();
         collectDataSource(roundEnvironment);
         dataFieldsGenerator.genJavaFile(mFiler);
-        watcherProxyGenerator.clear();
+        dataFieldsGenerator.clear();
+
         collectDataWatch(roundEnvironment);
         collectDataWatcher(roundEnvironment);
         watcherProxyGenerator.genJavaFile(mFiler);
+        watcherProxyGenerator.clear();
+
         return true;
     }
 

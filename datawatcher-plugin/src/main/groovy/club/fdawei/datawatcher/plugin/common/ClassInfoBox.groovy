@@ -51,6 +51,7 @@ final class ClassInfoBox {
     static final class DataWatch {
         static final String NAME = 'club.fdawei.datawatcher.annotation.DataWatch'
         static final String PROPERTY_FIELD_NAME = 'field'
+        static final String PROPERTY_DATA_NAME = 'data'
     }
 
     static final class FieldSetter {
@@ -64,6 +65,10 @@ final class ClassInfoBox {
 
     static final class HashMap {
         static final String NAME = 'java.util.HashMap'
+    }
+
+    static final class LObject {
+        static final String NAME = 'java.lang.Object'
     }
 
     static final class LString {

@@ -6,6 +6,7 @@ import javassist.CtClass
 import javassist.CtField
 import javassist.bytecode.AnnotationsAttribute
 import javassist.bytecode.Descriptor
+import javassist.bytecode.annotation.ClassMemberValue
 import javassist.bytecode.annotation.StringMemberValue
 
 class WatcherProxyHandler extends ClassHandler {
@@ -26,7 +27,7 @@ class WatcherProxyHandler extends ClassHandler {
         if (watcherProxyCtClass.isFrozen()) {
             watcherProxyCtClass.defrost()
         }
-        Map<CtField, String> fieldBindKeyMap = new HashMap<>();
+        Map<CtField, String> fieldBindKeyMap = new HashMap<>()
         watcherProxyCtClass.declaredFields.findAll() {
             isBindKeyField(it)
         }.each {
@@ -81,7 +82,14 @@ class WatcherProxyHandler extends ClassHandler {
             PluginLogger.e(TAG, "method ${dataWatchMethodName} without @DataWatch")
             return null
         }
-        def memberValue = dataWatchAnnotation.getMemberValue(ClassInfoBox.DataWatch.PROPERTY_FIELD_NAME)
-        return (memberValue as StringMemberValue).value
+        def fieldMemberValue = dataWatchAnnotation.getMemberValue(ClassInfoBox.DataWatch.PROPERTY_FIELD_NAME) as StringMemberValue
+        def dataMemberValue = dataWatchAnnotation.getMemberValue(ClassInfoBox.DataWatch.PROPERTY_DATA_NAME) as ClassMemberValue
+        String fieldValue
+        if (dataMemberValue != null && dataMemberValue.value != ClassInfoBox.LObject.NAME) {
+            fieldValue = dataMemberValue.value.replace('$', '.') + '.' + fieldMemberValue.value
+        } else {
+            fieldValue = fieldMemberValue.value
+        }
+        return fieldValue
     }
 }

@@ -13,6 +13,8 @@ import club.fdawei.datawatcher.annotation.DataWatch;
 import club.fdawei.datawatcher.api.DataWatcher;
 import club.fdawei.datawatcher.sample.data.UserInfo;
 import club.fdawei.datawatcher.sample.data.fields_UserInfo;
+import club.fdawei.datawatcher.sample.kt.Food;
+import club.fdawei.datawatcher.sample.kt.FoodWatcher;
 import club.fdawei.datawatcher.sample.sub.Country;
 import club.fdawei.datawatcher.api.data.ChangeEvent;
 import club.fdawei.datawatcher.sample.sub.CountryWatcher;
@@ -22,15 +24,20 @@ import club.fdawei.datawatcher.sample.test.Tester;
 public class MainActivity extends AppCompatActivity {
 
     private TextView tvName, tvAge, tvLocation, tvTesterFunBtn;
-    private EditText etName, etAge, etLocation, etCountryName, etProvinceName, etCityName;
+    private EditText etName, etAge, etLocation, etCountryName, etProvinceName, etCityName, etFoodName;
+
     private UserInfo userInfo = new UserInfo();
     private Country country = new Country();
     private Country.Province province = new Country.Province();
     private Country.Province.City city = new Country.Province.City();
+    private Food food = new Food();
+
     private CountryWatcher countryWatcher;
     private CountryWatcher.ProvinceWatcher provinceWatcher;
     private CountryWatcher.ProvinceWatcher.CityWatcher cityWatcher;
     private CountryWatcherFinal countryWatcherFinal;
+    private FoodWatcher foodWatcher;
+
     private Tester tester = new Tester();
 
     @Override
@@ -48,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         etCountryName = findViewById(R.id.et_country_name);
         etProvinceName = findViewById(R.id.et_province_name);
         etCityName = findViewById(R.id.et_city_name);
+        etFoodName = findViewById(R.id.et_food_name);
         tvTesterFunBtn = findViewById(R.id.tv_tester_fun);
 
         initListeners();
@@ -56,12 +64,14 @@ public class MainActivity extends AppCompatActivity {
         provinceWatcher = new CountryWatcher.ProvinceWatcher(getBaseContext());
         cityWatcher = new CountryWatcher.ProvinceWatcher.CityWatcher(getBaseContext());
         countryWatcherFinal = new CountryWatcherFinal(getBaseContext());
+        foodWatcher = new FoodWatcher(getBaseContext());
 
         DataWatcher.bind(this, userInfo);
         DataWatcher.bind(countryWatcher, country);
         DataWatcher.bind(provinceWatcher, province);
         DataWatcher.bind(cityWatcher, city);
         DataWatcher.bind(countryWatcherFinal, country);
+        DataWatcher.bind(foodWatcher, food);
     }
 
     @Override
@@ -71,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
         DataWatcher.unbindAll(provinceWatcher);
         DataWatcher.unbindAll(cityWatcher);
         DataWatcher.unbindAll(countryWatcherFinal);
+        DataWatcher.unbindAll(foodWatcher);
         super.onDestroy();
     }
 
@@ -185,6 +196,23 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable s) {
                 city.setName(s.toString());
+            }
+        });
+
+        etFoodName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                food.setName(s.toString());
             }
         });
 

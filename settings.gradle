@@ -1,7 +1,14 @@
-include ':datawatcher-annotation', ':datawatcher-processor', ':datawatcher-api', ':datawatcher-plugin', ':sub'
-include ':app', ':sub'
+include ':datawatcher-annotation',
+        ':datawatcher-processor',
+        ':datawatcher-api',
+        ':datawatcher-plugin',
+        ':app',
+        ':sub',
+        ':kt'
+
 project(':app').projectDir = new File('sample/app')
 project(':sub').projectDir = new File('sample/sub')
+project(':kt').projectDir = new File('sample/kt')
 
 
 gradle.projectsLoaded {

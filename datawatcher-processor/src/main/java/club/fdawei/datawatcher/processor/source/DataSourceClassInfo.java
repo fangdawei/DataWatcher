@@ -15,6 +15,7 @@ import javax.lang.model.element.VariableElement;
 
 import club.fdawei.datawatcher.annotation.FieldIgnore;
 import club.fdawei.datawatcher.processor.common.ClassInfoBox;
+import club.fdawei.datawatcher.processor.common.FieldDescriptor;
 
 
 /**
@@ -78,7 +79,7 @@ public class DataSourceClassInfo {
                     continue;
                 }
                 String filedName = variableElement.getSimpleName().toString();
-                String filedValue = typeElement.getQualifiedName().toString() + "." + filedName;
+                String filedValue = FieldDescriptor.of(typeElement, filedName);
                 FieldSpec fieldSpec = FieldSpec.builder(String.class, filedName)
                         .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
                         .initializer("$S", filedValue)

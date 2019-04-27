@@ -4,13 +4,13 @@ apply plugin: 'com.novoda.bintray-release'
 
 
 dependencies {
-    compileOnly 'com.android.tools.build:gradle:3.3.2'
+    compileOnly "com.android.tools.build:gradle:$gradle_version"
     //gradle sdk
     compileOnly gradleApi()
     //groovy sdk
     compileOnly localGroovy()
 
-    implementation 'com.android.tools.build:gradle-api:2.3.0'
+    implementation "com.android.tools.build:gradle-api:$gradle_version"
     implementation 'org.javassist:javassist:3.24.1-GA'
 }
 
@@ -18,6 +18,9 @@ dependencies {
 repositories {
     mavenCentral()
 }
+
+group = 'club.fdawei.datawatcher'
+version = '1.0.0'
 
 //打包到本地或者远程Maven库
 uploadArchives {

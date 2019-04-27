@@ -166,7 +166,7 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
         }
         //check method parameter
         List<? extends VariableElement> parameters = executableElement.getParameters();
-        if (parameters == null || parameters.size() != 1) {
+        if (parameters.size() != 1) {
             logw(TAG, "Method %s with @DataWatch but parameter illegal", methodName);
             return false;
         }
