@@ -14,23 +14,18 @@ import club.fdawei.datawatcher.processor.log.Logger;
 public abstract class JavaClassGenerator implements ILogger {
 
     private Logger logger;
-    private Types typeUtils;
-    private Elements elementUtils;
+    private IUtilBox utilBox;
+
+    public void setUtilBox(IUtilBox utilBox) {
+        this.utilBox = utilBox;
+    }
+
+    public IUtilBox getUtilBox() {
+        return utilBox;
+    }
 
     public void setLogger(Logger logger) {
         this.logger = logger;
-    }
-
-    public void setTypeUtils(Types typeUtils) {
-        this.typeUtils = typeUtils;
-    }
-
-    public void setElementUtils(Elements elementUtils) {
-        this.elementUtils = elementUtils;
-    }
-
-    public Types getTypeUtils() {
-        return typeUtils;
     }
 
     @Override
@@ -55,10 +50,6 @@ public abstract class JavaClassGenerator implements ILogger {
             return;
         }
         logger.loge(tag, format, args);
-    }
-
-    public String getPkgName(Element element) {
-        return elementUtils.getPackageOf(element).getQualifiedName().toString();
     }
 
     public abstract void genJavaFile(Filer filer);
