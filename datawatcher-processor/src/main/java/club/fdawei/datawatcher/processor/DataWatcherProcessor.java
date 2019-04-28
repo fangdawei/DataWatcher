@@ -4,6 +4,7 @@ import club.fdawei.datawatcher.annotation.DataSource;
 import club.fdawei.datawatcher.annotation.DataWatch;
 import club.fdawei.datawatcher.annotation.InheritWatch;
 import club.fdawei.datawatcher.processor.common.CommonTag;
+import club.fdawei.datawatcher.processor.common.IUtilBox;
 import club.fdawei.datawatcher.processor.log.Logger;
 import club.fdawei.datawatcher.processor.source.DataFieldsGenerator;
 import club.fdawei.datawatcher.processor.watcher.WatcherProxyGenerator;
@@ -30,6 +31,7 @@ public class DataWatcherProcessor extends AbstractProcessor {
     private Messager mMessager;
     private Elements mElementUtils;
     private Types mTypeUtils;
+    private IUtilBox mUtilBox;
     private Logger mLogger;
 
     private DataFieldsGenerator dataFieldsGenerator = new DataFieldsGenerator();
@@ -43,12 +45,21 @@ public class DataWatcherProcessor extends AbstractProcessor {
         mElementUtils = processingEnvironment.getElementUtils();
         mTypeUtils = processingEnvironment.getTypeUtils();
         mLogger = new Logger(mMessager);
-        dataFieldsGenerator.setTypeUtils(mTypeUtils);
+        mUtilBox = new IUtilBox() {
+            @Override
+            public Elements getElementsUtils() {
+                return mElementUtils;
+            }
+
+            @Override
+            public Types getTypeUtils() {
+                return mTypeUtils;
+            }
+        };
         dataFieldsGenerator.setLogger(mLogger);
-        dataFieldsGenerator.setElementUtils(mElementUtils);
-        watcherProxyGenerator.setTypeUtils(mTypeUtils);
+        dataFieldsGenerator.setUtilBox(mUtilBox);
         watcherProxyGenerator.setLogger(mLogger);
-        watcherProxyGenerator.setElementUtils(mElementUtils);
+        watcherProxyGenerator.setUtilBox(mUtilBox);
     }
 
     @Override

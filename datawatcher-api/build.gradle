@@ -32,7 +32,7 @@ dependencies {
 }
 
 group = 'club.fdawei.datawatcher'
-version = '1.0.0'
+version = "$datawatcher_lib_version"
 
 uploadArchives {
     repositories {
@@ -40,7 +40,7 @@ uploadArchives {
             repository(url: uri("${rootProject.localRepoPath}"))
             pom.groupId = "club.fdawei.datawatcher"
             pom.artifactId = "datawatcher-api"
-            pom.version = '1.0.0'
+            pom.version = "$datawatcher_lib_version"
         }
     }
 }
@@ -50,7 +50,7 @@ publish {
     userOrg = 'fangdawei'
     groupId = 'club.fdawei.datawatcher'
     artifactId = 'datawatcher-api'
-    publishVersion = '1.0.0'
+    publishVersion = "$datawatcher_lib_version"
     desc = 'DataWatcher'
 }
 

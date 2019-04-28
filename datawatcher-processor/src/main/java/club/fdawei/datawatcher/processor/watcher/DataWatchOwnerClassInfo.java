@@ -16,25 +16,25 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
 import club.fdawei.datawatcher.annotation.DataWatch;
+import club.fdawei.datawatcher.processor.common.AnnotationWithClassInfo;
 import club.fdawei.datawatcher.processor.common.ClassInfoBox;
+import club.fdawei.datawatcher.processor.common.IUtilBox;
 import club.fdawei.datawatcher.processor.common.TypeBox;
 
 /**
  * Created by david on 2019/4/16.
  */
-public class DataWatchOwnerClassInfo {
+public class DataWatchOwnerClassInfo extends AnnotationWithClassInfo {
 
     private String pkgName;
     private String simpleName;
     private TypeElement typeElement;
     private Set<ExecutableElement> executableSet = new LinkedHashSet<>();
 
-    public DataWatchOwnerClassInfo(String pkgName, TypeElement typeElement) {
+    public DataWatchOwnerClassInfo(String pkgName, String simpleName, TypeElement typeElement) {
         this.pkgName = pkgName;
+        this.simpleName = simpleName;
         this.typeElement = typeElement;
-        String qualifiedName = typeElement.getQualifiedName().toString();
-        String nameWithoutPkg = qualifiedName.replace(pkgName + ".", "");
-        simpleName = nameWithoutPkg.replace(".", "$");
     }
 
     public String getPkgName() {
@@ -137,7 +137,7 @@ public class DataWatchOwnerClassInfo {
     }
 
     public TypeSpec buildCreatorTypeSpec() {
-        ClassName proxyClass = ClassName.get(pkgName, getProxySimpleName());
+        ClassName proxyClass = ClassName.get(getPkgName(), getProxySimpleName());
         ClassName targetClass = ClassName.get(typeElement);
         MethodSpec createWatcherProxyMethod = MethodSpec.methodBuilder("createWatcherProxy")
                 .addModifiers(Modifier.PUBLIC)

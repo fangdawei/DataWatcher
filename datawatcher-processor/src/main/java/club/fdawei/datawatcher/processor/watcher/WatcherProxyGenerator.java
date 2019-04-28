@@ -106,10 +106,19 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
         }
     }
 
-    public void addExecutableReal(TypeElement typeElement, ExecutableElement executableElement) {
+    private void addExecutableReal(TypeElement typeElement, ExecutableElement executableElement) {
         DataWatchOwnerClassInfo dataWatchOwner = dataWatchOwnerMap.get(typeElement);
         if (dataWatchOwner == null) {
-            dataWatchOwner = new DataWatchOwnerClassInfo(getPkgName(typeElement), typeElement);
+            String pkgName = getUtilBox().getElementsUtils().getPackageOf(typeElement).getQualifiedName().toString();
+            String binaryName = getUtilBox().getElementsUtils().getBinaryName(typeElement).toString();
+            int index = binaryName.lastIndexOf('.');
+            String simpleName;
+            if (index >= 0 && index < binaryName.length() - 1) {
+                simpleName = binaryName.substring(index + 1);
+            } else {
+                simpleName = binaryName;
+            }
+            dataWatchOwner = new DataWatchOwnerClassInfo(pkgName, simpleName, typeElement);
             dataWatchOwnerMap.put(typeElement, dataWatchOwner);
         }
         dataWatchOwner.addExecutableElement(executableElement);
@@ -125,7 +134,6 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
                     .build();
             try {
                 watcherProxyJavaFile.writeTo(filer);
-                logi(TAG, "gen success %s.%s", pkgName, simpleName);
             } catch (IOException e) {
                 loge(TAG, "gen error %s.%s, %s", pkgName, simpleName, e.getMessage());
                 e.printStackTrace();
@@ -136,7 +144,6 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
                     .build();
             try {
                 creatorJavaFile.writeTo(filer);
-                logi(TAG, "gen success %s.%s", pkgName, creatorSimpleName);
             } catch (IOException e) {
                 loge(TAG, "gen error %s.%s, %s", pkgName, creatorSimpleName, e.getMessage());
                 e.printStackTrace();

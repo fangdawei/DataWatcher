@@ -14,6 +14,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 
 import club.fdawei.datawatcher.annotation.FieldIgnore;
+import club.fdawei.datawatcher.processor.common.AnnotationWithClassInfo;
 import club.fdawei.datawatcher.processor.common.ClassInfoBox;
 import club.fdawei.datawatcher.processor.common.FieldDescriptor;
 
@@ -21,7 +22,7 @@ import club.fdawei.datawatcher.processor.common.FieldDescriptor;
 /**
  * Created by david on 2019/4/16.
  */
-public class DataSourceClassInfo {
+public class DataSourceClassInfo extends AnnotationWithClassInfo {
 
     private String pkgName;
     private String simpleName;

@@ -30,7 +30,7 @@ public class DataFieldsGenerator extends JavaClassGenerator {
         if (typeElement == null) {
             return;
         }
-        String pkgName = getPkgName(typeElement);
+        String pkgName = getUtilBox().getElementsUtils().getPackageOf(typeElement).getQualifiedName().toString();
         String qualifiedName = typeElement.getQualifiedName().toString();
         String nameWithoutPkg = qualifiedName.replace(pkgName + ".", "");
         String[] simpleNamePath = nameWithoutPkg.split("\\.");
@@ -69,7 +69,6 @@ public class DataFieldsGenerator extends JavaClassGenerator {
                     .build();
             try {
                 javaFile.writeTo(filer);
-                logi(TAG, "gen success %s.%s", pkgName, classSimpleName);
             } catch (IOException e) {
                 loge(TAG, "gen error %s.%s, %s", pkgName, classSimpleName, e.getMessage());
             }

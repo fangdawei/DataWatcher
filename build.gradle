@@ -17,7 +17,7 @@ buildscript {
 
         def localRepoDir = new File(rootProject.localRepoPath)
         if (localRepoDir.exists()) {
-            classpath 'club.fdawei.datawatcher:datawatcher-plugin:1.0.0'
+            classpath "club.fdawei.datawatcher:datawatcher-plugin:$datawatcher_lib_version"
         }
     }
 }
