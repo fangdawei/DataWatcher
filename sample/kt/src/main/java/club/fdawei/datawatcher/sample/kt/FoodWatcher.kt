@@ -12,6 +12,7 @@ class FoodWatcher constructor(private val context: Context) {
 
     @DataWatch(data = Food::class, field = "name", thread = DataWatch.Thread.MAIN)
     fun onNameUpdate(event: ChangeEvent<Food, String>) {
-        Toast.makeText(context, "FoodWatcher onNameUpdate ${event.newValue}", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "FoodWatcher onNameUpdate ${event.newValue}",
+            Toast.LENGTH_SHORT).show()
     }
 }

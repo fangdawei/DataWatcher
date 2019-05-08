@@ -30,7 +30,7 @@ public class DataFieldsGenerator extends JavaClassGenerator {
         if (typeElement == null) {
             return;
         }
-        String pkgName = getUtilBox().getElementsUtils().getPackageOf(typeElement).getQualifiedName().toString();
+        String pkgName = getUtilProvider().getElementsUtils().getPackageOf(typeElement).getQualifiedName().toString();
         String qualifiedName = typeElement.getQualifiedName().toString();
         String nameWithoutPkg = qualifiedName.replace(pkgName + ".", "");
         String[] simpleNamePath = nameWithoutPkg.split("\\.");

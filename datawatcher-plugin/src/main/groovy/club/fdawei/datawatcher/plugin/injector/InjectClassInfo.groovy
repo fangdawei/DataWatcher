@@ -28,6 +28,6 @@ class InjectClassInfo {
 
 
     enum Type {
-        DATAFIELDS, WATCHERPROXY
+        DATA_FIELDS
     }
 }

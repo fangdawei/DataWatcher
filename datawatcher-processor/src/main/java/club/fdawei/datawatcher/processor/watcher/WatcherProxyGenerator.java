@@ -22,7 +22,7 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 import club.fdawei.datawatcher.annotation.DataWatch;
-import club.fdawei.datawatcher.annotation.InheritWatch;
+import club.fdawei.datawatcher.annotation.WatchInherit;
 import club.fdawei.datawatcher.processor.common.CommonTag;
 import club.fdawei.datawatcher.processor.common.JavaClassGenerator;
 import club.fdawei.datawatcher.processor.common.TypeBox;
@@ -48,12 +48,12 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
         addExecutableReal(typeElement, executableElement);
     }
 
-    public void addTypeWithInheritWatch(TypeElement typeElement) {
-        InheritWatch inheritWatch = typeElement.getAnnotation(InheritWatch.class);
-        if (inheritWatch == null) {
+    public void addTypeWithWatchInherit(TypeElement typeElement) {
+        WatchInherit watchInherit = typeElement.getAnnotation(WatchInherit.class);
+        if (watchInherit == null) {
             return;
         }
-        final int maxGenerations = inheritWatch.maxGenerations() > 0 ? inheritWatch.maxGenerations() : Integer.MAX_VALUE;
+        final int maxGenerations = watchInherit.maxGenerations() > 0 ? watchInherit.maxGenerations() : Integer.MAX_VALUE;
         final Map<String, ExecutableElement> executableMap = new LinkedHashMap<>();
         //查找被@DataWatch注解的方法
         for (Element element : typeElement.getEnclosedElements()) {
@@ -109,8 +109,8 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
     private void addExecutableReal(TypeElement typeElement, ExecutableElement executableElement) {
         DataWatchOwnerClassInfo dataWatchOwner = dataWatchOwnerMap.get(typeElement);
         if (dataWatchOwner == null) {
-            String pkgName = getUtilBox().getElementsUtils().getPackageOf(typeElement).getQualifiedName().toString();
-            String binaryName = getUtilBox().getElementsUtils().getBinaryName(typeElement).toString();
+            String pkgName = getUtilProvider().getElementsUtils().getPackageOf(typeElement).getQualifiedName().toString();
+            String binaryName = getUtilProvider().getElementsUtils().getBinaryName(typeElement).toString();
             int index = binaryName.lastIndexOf('.');
             String simpleName;
             if (index >= 0 && index < binaryName.length() - 1) {

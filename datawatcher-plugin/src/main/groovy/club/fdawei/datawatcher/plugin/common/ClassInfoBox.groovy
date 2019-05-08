@@ -15,17 +15,6 @@ final class ClassInfoBox {
         }
     }
 
-    static final class WatcherProxy {
-        static final String NAME_SUFFIX = '_WatcherProxy'
-        static final String FIELD_TARGET_NAME = '_target_'
-        static final String BINDKEY_FIELD_NAME_SUFFIX = '_BindKey'
-        static final String INIT_BINDKEYS_METHOD_NAME = 'initBindKeys'
-
-        static boolean isWatcherProxy(String fileName) {
-            return fileName ==~ /^.*_WatcherProxy\.class$/
-        }
-    }
-
     static final class IDataSource {
         static final String NAME = 'club.fdawei.datawatcher.api.data.IDataSource'
     }
@@ -46,12 +35,6 @@ final class ClassInfoBox {
     static final class DataSource {
         static final String NAME = 'club.fdawei.datawatcher.annotation.DataSource'
         static final String PROPERTY_AUTO_FIND_SETTER_NAME = 'setterAutoFind'
-    }
-
-    static final class DataWatch {
-        static final String NAME = 'club.fdawei.datawatcher.annotation.DataWatch'
-        static final String PROPERTY_FIELD_NAME = 'field'
-        static final String PROPERTY_DATA_NAME = 'data'
     }
 
     static final class FieldSetter {

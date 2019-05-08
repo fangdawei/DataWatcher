@@ -1,9 +1,6 @@
 apply plugin: 'com.android.library'
-
 apply plugin: 'kotlin-android'
-
 apply plugin: 'kotlin-android-extensions'
-
 apply plugin: 'kotlin-kapt'
 
 
@@ -47,8 +44,4 @@ dependencies {
 
 repositories {
     mavenCentral()
-}
-
-kapt {
-    useBuildCache = true
 }

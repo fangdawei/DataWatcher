@@ -1,9 +1,6 @@
 package club.fdawei.datawatcher.processor.common;
 
 import javax.annotation.processing.Filer;
-import javax.lang.model.element.Element;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 import club.fdawei.datawatcher.processor.log.ILogger;
 import club.fdawei.datawatcher.processor.log.Logger;
@@ -14,14 +11,14 @@ import club.fdawei.datawatcher.processor.log.Logger;
 public abstract class JavaClassGenerator implements ILogger {
 
     private Logger logger;
-    private IUtilBox utilBox;
+    private UtilProvider utilProvider;
 
-    public void setUtilBox(IUtilBox utilBox) {
-        this.utilBox = utilBox;
+    public void setUtilProvider(UtilProvider utilProvider) {
+        this.utilProvider = utilProvider;
     }
 
-    public IUtilBox getUtilBox() {
-        return utilBox;
+    public UtilProvider getUtilProvider() {
+        return utilProvider;
     }
 
     public void setLogger(Logger logger) {

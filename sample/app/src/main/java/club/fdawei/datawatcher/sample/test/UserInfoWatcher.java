@@ -11,17 +11,17 @@ class UserInfoWatcher {
 
     private static final String TAG = "Tester";
 
-    @DataWatch(field = fields_UserInfo.name)
+    @DataWatch(data = UserInfo.class, field = "name")
     public void onNameChange(ChangeEvent<UserInfo, String> event) {
         Log.i(TAG, "onNameChange, old=" + event.getOldValue() + ", new=" + event.getNewValue());
     }
 
-    @DataWatch(field = fields_UserInfo.age, thread = DataWatch.Thread.MAIN)
+    @DataWatch(data = UserInfo.class, field = "age", thread = DataWatch.Thread.MAIN)
     public void onAgeChange(ChangeEvent<UserInfo, Integer> event) {
         Log.i(TAG, "onAgeChange, old=" + event.getOldValue() + ", new=" + event.getNewValue());
     }
 
-    @DataWatch(field = fields_UserInfo.location, thread = DataWatch.Thread.WORK_THREAD)
+    @DataWatch(data = UserInfo.class, field = "location", thread = DataWatch.Thread.WORK_THREAD)
     public void onLocationChange(ChangeEvent<UserInfo, String> event) {
         Log.i(TAG, "onLocationChange, old=" + event.getOldValue() + ", new=" + event.getNewValue());
     }

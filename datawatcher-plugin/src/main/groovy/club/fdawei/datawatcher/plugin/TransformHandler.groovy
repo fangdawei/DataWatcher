@@ -26,13 +26,13 @@ class TransformHandler {
         this.transformInvocation = transformInvocation
     }
 
-    private void addClassPath(String path) {
+    private void syncAddClassPath(String path) {
         synchronized (classPathList) {
             classPathList.add(path)
         }
     }
 
-    private void addInjectInfo(InjectInfo injectInfo) {
+    private void syncAddInjectInfo(InjectInfo injectInfo) {
         synchronized (injectInfoList) {
             injectInfoList.add(injectInfo)
         }
@@ -103,7 +103,7 @@ class TransformHandler {
     }
 
     private void handleDir(DirectoryInput dirInput) {
-        addClassPath(dirInput.file.absolutePath)
+        syncAddClassPath(dirInput.file.absolutePath)
         def destDir = transformInvocation.outputProvider.getContentLocation(dirInput.name, dirInput.contentTypes, dirInput.scopes, Format.DIRECTORY)
         if (transformInvocation.incremental) {
             List<InjectClassInfo> classInfoList = new LinkedList<>()
@@ -130,14 +130,14 @@ class TransformHandler {
             if (classInfoList.size() > 0) {
                 def injectInfo = new InjectInfo(dirInput.file, destDir, InjectInfo.Type.FILE_LIST)
                 injectInfo.setClassInfoList(classInfoList)
-                addInjectInfo(injectInfo)
+                syncAddInjectInfo(injectInfo)
             }
         } else {
             List<InjectClassInfo> classInfoList = findClassNeedInjectFromDir(dirInput.file)
             if (classInfoList != null && classInfoList.size() > 0) {
                 def injectInfo = new InjectInfo(dirInput.file, destDir, InjectInfo.Type.DIR)
                 injectInfo.setClassInfoList(classInfoList)
-                addInjectInfo(injectInfo)
+                syncAddInjectInfo(injectInfo)
             } else {
                 FileUtils.copyDirectory(dirInput.file, destDir)
             }
@@ -145,11 +145,7 @@ class TransformHandler {
     }
 
     private void handleJar(JarInput jarInput) {
-        def jarName = jarInput.name
-        if (jarName.endsWith(".jar")) {
-            jarName = jarName.substring(0, jarName.length() - 4)
-        }
-        def jarDestName = jarName + DigestUtils.md2Hex(jarInput.file.absolutePath) + '.jar'
+        def jarDestName = DigestUtils.md2Hex(jarInput.file.absolutePath).concat('.jar')
         def dest = transformInvocation.outputProvider.getContentLocation(jarDestName, jarInput.contentTypes, jarInput.scopes, Format.JAR)
         if (transformInvocation.incremental) {
             switch (jarInput.status) {
@@ -161,7 +157,7 @@ class TransformHandler {
                     FileUtils.deleteIfExists(dest)
                     break
                 case Status.NOTCHANGED:
-                    addClassPath(jarInput.file.absolutePath)
+                    syncAddClassPath(jarInput.file.absolutePath)
                     break
             }
         } else {
@@ -174,21 +170,19 @@ class TransformHandler {
         if (classInfoList != null && classInfoList.size() > 0) {
             def tmpDir = new File(transformInvocation.getContext().temporaryDir, DigestUtils.md2Hex(jarInput.file.absolutePath))
             JarUtils.unzipJarFile(jarInput.file.absolutePath, tmpDir.absolutePath)
-            addClassPath(tmpDir.absolutePath)
+            syncAddClassPath(tmpDir.absolutePath)
             def injectInfo = new InjectInfo(tmpDir, dest, InjectInfo.Type.JAR)
             injectInfo.setClassInfoList(classInfoList)
-            addInjectInfo(injectInfo)
+            syncAddInjectInfo(injectInfo)
         } else {
-            addClassPath(jarInput.file.absolutePath)
+            syncAddClassPath(jarInput.file.absolutePath)
             FileUtils.copyFile(jarInput.file, dest)
         }
     }
 
     private static InjectClassInfo findClassNeedInjectFromClass(File classFile, File dir) {
         if (ClassInfoBox.DataFields.isDataFields(classFile.name)) {
-            return new InjectClassInfo(FileUtils.relativePath(classFile, dir), InjectClassInfo.Type.DATAFIELDS)
-        } else if (ClassInfoBox.WatcherProxy.isWatcherProxy(classFile.name)) {
-            return new InjectClassInfo(FileUtils.relativePath(classFile, dir), InjectClassInfo.Type.WATCHERPROXY)
+            return new InjectClassInfo(FileUtils.relativePath(classFile, dir), InjectClassInfo.Type.DATA_FIELDS)
         }
         return null
     }
@@ -202,10 +196,7 @@ class TransformHandler {
                         return
                     }
                     if (ClassInfoBox.DataFields.isDataFields(file.name)) {
-                        def classInfo = new InjectClassInfo(FileUtils.relativePath(file, dir), InjectClassInfo.Type.DATAFIELDS)
-                        classInfoList.add(classInfo)
-                    } else if (ClassInfoBox.WatcherProxy.isWatcherProxy(file.name)) {
-                        def classInfo = new InjectClassInfo(FileUtils.relativePath(file, dir), InjectClassInfo.Type.WATCHERPROXY)
+                        def classInfo = new InjectClassInfo(FileUtils.relativePath(file, dir), InjectClassInfo.Type.DATA_FIELDS)
                         classInfoList.add(classInfo)
                     }
             }
@@ -223,10 +214,7 @@ class TransformHandler {
                 continue
             }
             if (ClassInfoBox.DataFields.isDataFields(jarEntry.name)) {
-                def classInfo = new InjectClassInfo(jarEntry.name, InjectClassInfo.Type.DATAFIELDS)
-                classInfoList.add(classInfo)
-            } else if (ClassInfoBox.WatcherProxy.isWatcherProxy(jarEntry.name)) {
-                def classInfo = new InjectClassInfo(jarEntry.name, InjectClassInfo.Type.WATCHERPROXY)
+                def classInfo = new InjectClassInfo(jarEntry.name, InjectClassInfo.Type.DATA_FIELDS)
                 classInfoList.add(classInfo)
             }
         }

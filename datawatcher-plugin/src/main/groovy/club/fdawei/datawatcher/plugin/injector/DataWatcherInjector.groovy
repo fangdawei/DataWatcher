@@ -11,7 +11,6 @@ class DataWatcherInjector implements InjectHelper {
     private final ClassPool classPool = new ClassPool(true)
     private final Collection<ClassPath> classPathList = new LinkedList<>()
     private final DataSourceHandler dataSourceHandler = new DataSourceHandler(this)
-    private final WatcherProxyHandler watcherProxyHandler = new WatcherProxyHandler(this)
 
     void addClassPath(List<String> pathList) {
         if (pathList == null) {
@@ -33,11 +32,8 @@ class DataWatcherInjector implements InjectHelper {
         injectInfo.classInfoList.each {
             def classFile = new File(injectInfo.sourceDir, it.name)
             switch (it.type) {
-                case InjectClassInfo.Type.DATAFIELDS:
+                case InjectClassInfo.Type.DATA_FIELDS:
                     dataSourceHandler.handle(classFile, injectInfo.sourceDir)
-                    break
-                case InjectClassInfo.Type.WATCHERPROXY:
-                    watcherProxyHandler.handle(classFile, injectInfo.sourceDir)
                     break
             }
         }
