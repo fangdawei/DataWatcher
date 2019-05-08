@@ -9,9 +9,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface DataWatch {
 
-    String field();
+    Class<?> data();
 
-    Class data() default Object.class;
+    String field();
 
     int thread() default Thread.CURRENT;
 

@@ -2,14 +2,15 @@ package club.fdawei.datawatcher.processor;
 
 import club.fdawei.datawatcher.annotation.DataSource;
 import club.fdawei.datawatcher.annotation.DataWatch;
-import club.fdawei.datawatcher.annotation.InheritWatch;
+import club.fdawei.datawatcher.annotation.WatchInherit;
 import club.fdawei.datawatcher.processor.common.CommonTag;
-import club.fdawei.datawatcher.processor.common.IUtilBox;
+import club.fdawei.datawatcher.processor.common.UtilProvider;
 import club.fdawei.datawatcher.processor.log.Logger;
 import club.fdawei.datawatcher.processor.source.DataFieldsGenerator;
 import club.fdawei.datawatcher.processor.watcher.WatcherProxyGenerator;
 
 import com.google.auto.service.AutoService;
+import com.sun.source.util.Trees;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
@@ -28,11 +29,11 @@ public class DataWatcherProcessor extends AbstractProcessor {
     private static final String TAG = CommonTag.TAG;
 
     private Filer mFiler;
-    private Messager mMessager;
     private Elements mElementUtils;
     private Types mTypeUtils;
-    private IUtilBox mUtilBox;
+    private UtilProvider mUtilProvider;
     private Logger mLogger;
+    private Trees mTrees;
 
     private DataFieldsGenerator dataFieldsGenerator = new DataFieldsGenerator();
     private WatcherProxyGenerator watcherProxyGenerator = new WatcherProxyGenerator();
@@ -41,11 +42,11 @@ public class DataWatcherProcessor extends AbstractProcessor {
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
         super.init(processingEnvironment);
         mFiler = processingEnvironment.getFiler();
-        mMessager = processingEnvironment.getMessager();
         mElementUtils = processingEnvironment.getElementUtils();
         mTypeUtils = processingEnvironment.getTypeUtils();
-        mLogger = new Logger(mMessager);
-        mUtilBox = new IUtilBox() {
+        mLogger = new Logger(processingEnvironment.getMessager());
+        mTrees = Trees.instance(processingEnvironment);
+        mUtilProvider = new UtilProvider() {
             @Override
             public Elements getElementsUtils() {
                 return mElementUtils;
@@ -55,11 +56,16 @@ public class DataWatcherProcessor extends AbstractProcessor {
             public Types getTypeUtils() {
                 return mTypeUtils;
             }
+
+            @Override
+            public Trees getTrees() {
+                return mTrees;
+            }
         };
         dataFieldsGenerator.setLogger(mLogger);
-        dataFieldsGenerator.setUtilBox(mUtilBox);
+        dataFieldsGenerator.setUtilProvider(mUtilProvider);
         watcherProxyGenerator.setLogger(mLogger);
-        watcherProxyGenerator.setUtilBox(mUtilBox);
+        watcherProxyGenerator.setUtilProvider(mUtilProvider);
     }
 
     @Override
@@ -67,7 +73,7 @@ public class DataWatcherProcessor extends AbstractProcessor {
         Set<String> types = new LinkedHashSet<>();
         types.add(DataSource.class.getCanonicalName());
         types.add(DataWatch.class.getCanonicalName());
-        types.add(InheritWatch.class.getCanonicalName());
+        types.add(WatchInherit.class.getCanonicalName());
         return types;
     }
 
@@ -83,7 +89,7 @@ public class DataWatcherProcessor extends AbstractProcessor {
         dataFieldsGenerator.clear();
 
         collectDataWatch(roundEnvironment);
-        collectDataWatcher(roundEnvironment);
+        collectWatchInherit(roundEnvironment);
         watcherProxyGenerator.genJavaFile(mFiler);
         watcherProxyGenerator.clear();
 
@@ -120,18 +126,18 @@ public class DataWatcherProcessor extends AbstractProcessor {
         }
     }
 
-    private void collectDataWatcher(RoundEnvironment roundEnvironment) {
-        Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(InheritWatch.class);
+    private void collectWatchInherit(RoundEnvironment roundEnvironment) {
+        Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(WatchInherit.class);
         if (elements == null) {
             return;
         }
         for(Element element : elements) {
             if (element.getKind() != ElementKind.CLASS) {
-                mLogger.logw(TAG, "Only class can be annotated with @%s", InheritWatch.class.getSimpleName());
+                mLogger.logw(TAG, "Only class can be annotated with @%s", WatchInherit.class.getSimpleName());
                 continue;
             }
             TypeElement typeElement = (TypeElement) element;
-            watcherProxyGenerator.addTypeWithInheritWatch(typeElement);
+            watcherProxyGenerator.addTypeWithWatchInherit(typeElement);
         }
     }
 }

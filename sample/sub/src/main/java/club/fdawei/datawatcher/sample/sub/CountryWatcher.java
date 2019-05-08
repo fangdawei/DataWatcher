@@ -14,7 +14,7 @@ public class CountryWatcher {
         this.context = context;
     }
 
-    @DataWatch(field = fields_Country.name, notifyWhenBind = false)
+    @DataWatch(data = Country.class, field = "name", notifyWhenBind = false)
     public void onNameChange(ChangeEvent<Country, String> event) {
         Toast.makeText(context, "Country name is " + event.getNewValue(), Toast.LENGTH_SHORT).show();
     }
@@ -29,7 +29,7 @@ public class CountryWatcher {
             this.watcherName = "ProvinceWatcher";
         }
 
-        @DataWatch(field = fields_Country.Province.name, notifyWhenBind = false)
+        @DataWatch(data = Country.Province.class, field = "name", notifyWhenBind = false)
         public void onNameChange(ChangeEvent<Country.Province, String> event) {
             Toast.makeText(context, "Province name is " + event.getNewValue(), Toast.LENGTH_SHORT).show();
         }
@@ -44,7 +44,7 @@ public class CountryWatcher {
                 this.watcherName = "CityWatcher";
             }
 
-            @DataWatch(field = fields_Country.Province.City.name, notifyWhenBind = false)
+            @DataWatch(data = Country.Province.City.class, field = "name", notifyWhenBind = false)
             public void onNameChange(ChangeEvent<Country.Province.City, String> event) {
                 Toast.makeText(context, "City name is " + event.getNewValue(), Toast.LENGTH_SHORT).show();
             }

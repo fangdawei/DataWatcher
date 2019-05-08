@@ -1,5 +1,6 @@
 package club.fdawei.datawatcher.sample;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
@@ -12,7 +13,6 @@ import android.widget.TextView;
 import club.fdawei.datawatcher.annotation.DataWatch;
 import club.fdawei.datawatcher.api.DataWatcher;
 import club.fdawei.datawatcher.sample.data.UserInfo;
-import club.fdawei.datawatcher.sample.data.fields_UserInfo;
 import club.fdawei.datawatcher.sample.kt.Food;
 import club.fdawei.datawatcher.sample.kt.FoodWatcher;
 import club.fdawei.datawatcher.sample.sub.Country;
@@ -21,6 +21,7 @@ import club.fdawei.datawatcher.sample.sub.CountryWatcher;
 import club.fdawei.datawatcher.sample.sub.CountryWatcherFinal;
 import club.fdawei.datawatcher.sample.test.Tester;
 
+@SuppressLint("SetTextI18n")
 public class MainActivity extends AppCompatActivity {
 
     private TextView tvName, tvAge, tvLocation, tvTesterFunBtn;
@@ -230,17 +231,17 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    @DataWatch(field = fields_UserInfo.name, thread = DataWatch.Thread.MAIN)
+    @DataWatch(data = UserInfo.class, field = "name", thread = DataWatch.Thread.MAIN)
     public void onNameChanged(ChangeEvent<UserInfo, String> event) {
         tvName.setText(event.getNewValue());
     }
 
-    @DataWatch(field = fields_UserInfo.age, thread = DataWatch.Thread.MAIN, notifyWhenBind = false)
+    @DataWatch(data = UserInfo.class, field = "age", thread = DataWatch.Thread.MAIN, notifyWhenBind = false)
     public void onAgeChanged(ChangeEvent<UserInfo, Integer> event) {
         tvAge.setText("" + event.getNewValue());
     }
 
-    @DataWatch(field = fields_UserInfo.location, thread = DataWatch.Thread.MAIN)
+    @DataWatch(data = UserInfo.class, field = "location", thread = DataWatch.Thread.MAIN)
     public void onLocationChanged(ChangeEvent<UserInfo, String> event) {
         tvLocation.setText(event.getNewValue());
     }

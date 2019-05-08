@@ -11,14 +11,19 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 
 import club.fdawei.datawatcher.annotation.DataWatch;
+import club.fdawei.datawatcher.processor.common.AnnoUtils;
 import club.fdawei.datawatcher.processor.common.AnnotationWithClassInfo;
 import club.fdawei.datawatcher.processor.common.ClassInfoBox;
-import club.fdawei.datawatcher.processor.common.IUtilBox;
+import club.fdawei.datawatcher.processor.common.FieldDescriptor;
 import club.fdawei.datawatcher.processor.common.TypeBox;
 
 /**
@@ -58,7 +63,8 @@ public class DataWatchOwnerClassInfo extends AnnotationWithClassInfo {
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .superclass(ParameterizedTypeName.get(TypeBox.ABS_WATCHER_PROXY, TypeName.get(typeElement.asType())));
 
-        watcherProxyClassBuilder.addField(TypeName.get(typeElement.asType()), ClassInfoBox.WatcherProxy.FIELD_TARGET_NAME, Modifier.PRIVATE);
+        watcherProxyClassBuilder.addField(TypeName.get(typeElement.asType()),
+                ClassInfoBox.WatcherProxy.FIELD_TARGET_NAME, Modifier.PRIVATE);
 
         MethodSpec watcherProxyConstructorMethod = MethodSpec.constructorBuilder()
                 .addParameter(TypeName.get(typeElement.asType()), "target")
@@ -66,13 +72,10 @@ public class DataWatchOwnerClassInfo extends AnnotationWithClassInfo {
                 .build();
         watcherProxyClassBuilder.addMethod(watcherProxyConstructorMethod);
 
-        MethodSpec initBindKeysMethod = MethodSpec.methodBuilder("initBindKeys")
+        MethodSpec.Builder initBindKeysMethodBuilder = MethodSpec.methodBuilder("initBindKeys")
                 .addModifiers(Modifier.PROTECTED)
                 .returns(TypeName.VOID)
-                .addAnnotation(Override.class)
-                .addComment("here will insert code")
-                .build();
-        watcherProxyClassBuilder.addMethod(initBindKeysMethod);
+                .addAnnotation(Override.class);
 
         MethodSpec.Builder initPublishersMethodBuilder = MethodSpec.methodBuilder("initPublishers")
                 .addModifiers(Modifier.PROTECTED)
@@ -97,10 +100,17 @@ public class DataWatchOwnerClassInfo extends AnnotationWithClassInfo {
 
             String methodName = executableElement.getSimpleName().toString();
             String methodBindKeyFieldName = methodName + "_BindKey";
-            FieldSpec methodKeyField = FieldSpec.builder(String.class, methodBindKeyFieldName)
+            FieldSpec methodBindKeyField = FieldSpec.builder(String.class, methodBindKeyFieldName)
                     .addModifiers(Modifier.PRIVATE)
                     .build();
-            watcherProxyClassBuilder.addField(methodKeyField);
+            watcherProxyClassBuilder.addField(methodBindKeyField);
+
+            AnnotationValue dataValue = AnnoUtils.getAnnoValue(executableElement, DataWatch.class, "data");
+            if (dataValue != null) {
+                TypeMirror dataClassType = (TypeMirror) dataValue.getValue();
+                String bindKeyStr = FieldDescriptor.of(dataClassType, dataWatch.field());
+                initBindKeysMethodBuilder.addStatement("this.$L = $S", methodBindKeyFieldName, bindKeyStr);
+            }
 
             String publisherName = executableElement.getSimpleName().toString() + "_Publisher";
             MethodSpec publishMethod = MethodSpec.methodBuilder("publish")
@@ -132,6 +142,7 @@ public class DataWatchOwnerClassInfo extends AnnotationWithClassInfo {
             initPublishersMethodBuilder.addStatement("$L.setNeedNotifyWhenBind($L)", publisherName, dataWatch.notifyWhenBind());
             initPublishersMethodBuilder.addStatement("registerPublisher($N, $L)", methodBindKeyFieldName, publisherName);
         }
+        watcherProxyClassBuilder.addMethod(initBindKeysMethodBuilder.build());
         watcherProxyClassBuilder.addMethod(initPublishersMethodBuilder.build());
         return watcherProxyClassBuilder.build();
     }
