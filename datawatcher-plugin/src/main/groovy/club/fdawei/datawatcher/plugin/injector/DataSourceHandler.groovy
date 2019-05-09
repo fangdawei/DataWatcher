@@ -36,7 +36,6 @@ class DataSourceHandler extends ClassHandler {
         addGetDataBinderMethod(dataSourceCtClass)
         addGetAllFieldValueMethod(dataSourceCtClass, dataFieldsCtClass)
         hookAllSetterMethod(dataSourceCtClass, dataFieldsCtClass)
-        dataSourceCtClass.getClassFile()
         dataSourceCtClass.writeFile(dir.absolutePath)
         dataSourceCtClass.detach()
     }
@@ -62,17 +61,16 @@ class DataSourceHandler extends ClassHandler {
         def srcBuilder = new StringBuilder()
         srcBuilder.append("public ${ClassInfoBox.Map.NAME} getAllFieldValue() {")
         srcBuilder.append("${ClassInfoBox.Map.NAME} map = new ${ClassInfoBox.HashMap.NAME}();")
-        CtClass stringCtClass = helper.classPool.getCtClass('java.lang.String')
         fieldsCtClass.declaredFields.findAll {
-            ctField -> ClassInfoBox.DataFields.FIELD_SOURCE_NAME != ctField.name && ctField.type == stringCtClass && Modifier.isPublic(ctField.getModifiers())
+            ctField -> isFieldKey(ctField)
         }.each {
             ctField ->
                 def sourceCtField = ctClass.getDeclaredField(ctField.name)
                 if (sourceCtField.type.isPrimitive()) {
                     def wrapperName = (sourceCtField.type as CtPrimitiveType).getWrapperName()
-                    srcBuilder.append("map.put(${fieldsCtClass.name}.${ctField.name}, new ${wrapperName}(${sourceCtField.name}));")
+                    srcBuilder.append("map.put(\"${sourceCtField.name}\", new ${wrapperName}(${sourceCtField.name}));")
                 } else {
-                    srcBuilder.append("map.put(${fieldsCtClass.name}.${ctField.name}, ${sourceCtField.name});")
+                    srcBuilder.append("map.put(\"${sourceCtField.name}\", ${sourceCtField.name});")
                 }
         }
         srcBuilder.append('return map;')
@@ -82,9 +80,8 @@ class DataSourceHandler extends ClassHandler {
 
     private void hookAllSetterMethod(CtClass ctClass, CtClass fieldsCtClass) {
         Set<CtField> sourceFieldSet  = new HashSet<>()
-        CtClass stringCtClass = helper.classPool.getCtClass(ClassInfoBox.LString.NAME)
         fieldsCtClass.declaredFields.findAll {
-            ctField -> ctField.type == stringCtClass
+            ctField -> isFieldKey(ctField)
         }.each {
             ctField ->
                 def dataSourceCtField = ctClass.getDeclaredField(ctField.name)
@@ -96,14 +93,18 @@ class DataSourceHandler extends ClassHandler {
         ctClass.declaredMethods.each {
             ctMethod ->
                 if (autoFindSetter) {
-                    hookSetter(ctMethod, sourceFieldSet, fieldsCtClass)
+                    hookSetter(ctMethod, sourceFieldSet)
                 } else {
-                    def setterField = checkSetterAndFindField(ctMethod)
-                    if (setterField != null) {
-                        hookSetter(ctMethod, [setterField] as HashSet, fieldsCtClass)
-                    }
+                    hookSetterIfAnnoWith(ctMethod)
                 }
         }
+    }
+
+    private boolean isFieldKey(CtField ctField) {
+        CtClass stringCtClass = helper.classPool.getCtClass(ClassInfoBox.LString.NAME)
+        return ctField.name != ClassInfoBox.DataFields.FIELD_SOURCE_NAME &&
+                ctField.type == stringCtClass &&
+                Modifier.isPublic(ctField.getModifiers())
     }
 
     private boolean isAutoFindSetter(CtClass ctClass) {
@@ -123,10 +124,45 @@ class DataSourceHandler extends ClassHandler {
         return (memberValue as BooleanMemberValue).value
     }
 
+    private void hookSetter(CtMethod ctMethod, Set<CtField> sourceFieldSet) {
+        ctMethod.instrument(new ExprEditor() {
+            @Override
+            void edit(FieldAccess f) throws CannotCompileException {
+                if (f.writer && sourceFieldSet.contains(f.field)) {
+                    String replaceSrc
+                    if (f.field.type.primitive) {
+                        def wrapperTypeName = (f.field.type as CtPrimitiveType).wrapperName
+                        replaceSrc = new StringBuilder()
+                                .append("${wrapperTypeName} _oldValue = new ${wrapperTypeName}(this.${f.field.name});")
+                                .append("${wrapperTypeName} _newValue = new ${wrapperTypeName}(\$1);")
+                                .append("\$proceed(\$\$);")
+                                .append("this.dataBinder.${ClassInfoBox.DataBinder.METHOD_ON_DATA_CHANGED_NAME}(\"${f.field.name}\", _oldValue, _newValue);")
+                                .toString()
+                    } else {
+                        replaceSrc = new StringBuilder()
+                                .append("${f.field.type.name} _oldValue = this.${f.field.name};")
+                                .append("${f.field.type.name} _newValue = \$1;")
+                                .append("\$proceed(\$\$);")
+                                .append("this.dataBinder.${ClassInfoBox.DataBinder.METHOD_ON_DATA_CHANGED_NAME}(\"${f.field.name}\", _oldValue, _newValue);")
+                                .toString()
+                    }
+                    f.replace(replaceSrc)
+                }
+            }
+        })
+    }
+
+    private void hookSetterIfAnnoWith(CtMethod ctMethod) {
+        def field = getFieldIfSetterAnnoWith(ctMethod)
+        if (field != null) {
+            hookSetter(ctMethod, [setterField] as HashSet)
+        }
+    }
+
     /**
-     * 判断是否是被@FieldSetter注解的Setter,是返回对应的CtField,否则返回null
+     * 判断是否被@FieldSetter注解,是:返回对应的CtField,否:返回null
      */
-    private CtField checkSetterAndFindField(CtMethod ctMethod) {
+    private CtField getFieldIfSetterAnnoWith(CtMethod ctMethod) {
         def attributeInfo = ctMethod.getMethodInfo().getAttribute(AnnotationsAttribute.invisibleTag)
         if (attributeInfo == null) {
             return null
@@ -139,33 +175,5 @@ class DataSourceHandler extends ClassHandler {
         def memberValue = fieldSetterAnnotation.getMemberValue(ClassInfoBox.FieldSetter.PROPERTY_FIELD_NAME)
         String setterFieldName = (memberValue as StringMemberValue).value
         return ctMethod.getDeclaringClass().getDeclaredField(setterFieldName)
-    }
-
-    private void hookSetter(CtMethod ctMethod, Set<CtField> sourceFieldSet, CtClass fieldsCtClass) {
-        ctMethod.instrument(new ExprEditor() {
-            @Override
-            void edit(FieldAccess f) throws CannotCompileException {
-                if (f.writer && sourceFieldSet.contains(f.field)) {
-                    String replaceSrc
-                    if (f.field.type.primitive) {
-                        def wrapperTypeName = (f.field.type as CtPrimitiveType).wrapperName
-                        replaceSrc = new StringBuilder()
-                                .append("${wrapperTypeName} _oldValue = new ${wrapperTypeName}(this.${f.field.name});")
-                                .append("${wrapperTypeName} _newValue = new ${wrapperTypeName}(\$1);")
-                                .append("\$proceed(\$\$);")
-                                .append("this.dataBinder.${ClassInfoBox.DataBinder.METHOD_ON_DATA_CHANGED_NAME}(${fieldsCtClass.name}.${f.field.name}, _oldValue, _newValue);")
-                                .toString()
-                    } else {
-                        replaceSrc = new StringBuilder()
-                                .append("${f.field.type.name} _oldValue = this.${f.field.name};")
-                                .append("${f.field.type.name} _newValue = \$1;")
-                                .append("\$proceed(\$\$);")
-                                .append("this.dataBinder.${ClassInfoBox.DataBinder.METHOD_ON_DATA_CHANGED_NAME}(${fieldsCtClass.name}.${f.field.name}, _oldValue, _newValue);")
-                                .toString()
-                    }
-                    f.replace(replaceSrc)
-                }
-            }
-        })
     }
 }

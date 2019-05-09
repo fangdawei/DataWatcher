@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.processing.Filer;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -23,6 +24,7 @@ import javax.lang.model.type.TypeMirror;
 
 import club.fdawei.datawatcher.annotation.DataWatch;
 import club.fdawei.datawatcher.annotation.WatchInherit;
+import club.fdawei.datawatcher.processor.common.AnnoUtils;
 import club.fdawei.datawatcher.processor.common.CommonTag;
 import club.fdawei.datawatcher.processor.common.JavaClassGenerator;
 import club.fdawei.datawatcher.processor.common.TypeBox;
@@ -92,7 +94,7 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
                 }
                 String methodName = executableElement.getSimpleName().toString();
                 if (executableMap.containsKey(methodName)) {
-                    //子类已经覆盖，忽略
+                    //子类已经覆盖注解，忽略
                     continue;
                 }
                 executableMap.put(methodName, executableElement);
@@ -155,39 +157,63 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
         if (executableElement == null) {
             return false;
         }
-        String methodName = executableElement.getSimpleName().toString();
-        //check method with @DataWatch
-        if (executableElement.getAnnotation(DataWatch.class) == null) {
-            logw(TAG, "Method %s without @DataWatch", methodName);
+        String methodDesc = String.format("Method %s(in %s)", executableElement.getSimpleName().toString(),
+                executableElement.getEnclosingElement().getSimpleName().toString());
+        //check DataWatch
+        DataWatch dataWatch = executableElement.getAnnotation(DataWatch.class);
+        if (dataWatch == null) {
+            logw(TAG, "%s without @DataWatch", methodDesc);
+            return false;
+        }
+        AnnotationValue annoDataValue = AnnoUtils.getAnnoValue(executableElement, DataWatch.class, "data");
+        if (annoDataValue == null) {
+            logw(TAG, "%s with @DataWatch but data's value is null", methodDesc);
+            return false;
+        }
+        Element dataElement = ((DeclaredType) annoDataValue.getValue()).asElement();
+        if (dataElement.getKind() != ElementKind.CLASS) {
+            logw(TAG, "%s with @DataWatch but data's value is not a class", methodDesc);
+            return false;
+        }
+        //检查DataWatch中参数field是否是data的字段
+        TypeElement dataTypeElement = (TypeElement) dataElement;
+        List<? extends Element> enclosedElements = dataTypeElement.getEnclosedElements();
+        boolean hasField = false;
+        for(Element element : enclosedElements) {
+            if (element.getKind() == ElementKind.FIELD) {
+                VariableElement variableElement = (VariableElement) element;
+                if (variableElement.getSimpleName().toString().equals(dataWatch.field())) {
+                    hasField = true;
+                    break;
+                }
+            }
+        }
+        if (!hasField) {
+            logw(TAG, "%s with @DataWatch but field %s not found in data source", methodDesc, dataWatch.field());
             return false;
         }
         //check method
-        if (!executableElement.getModifiers().contains(Modifier.PUBLIC)) {
-            logw(TAG, "Method %s with @DataWatch should be public", methodName);
-            return false;
-        }
-        //check method return
-        if (!TypeName.get(executableElement.getReturnType()).equals(TypeName.VOID)) {
-            logw(TAG, "Method %s with @DataWatch return should be void", methodName);
+        if (executableElement.getModifiers().contains(Modifier.PRIVATE)) {
+            logw(TAG, "%s with @DataWatch can not be private", methodDesc);
             return false;
         }
         //check method parameter
         List<? extends VariableElement> parameters = executableElement.getParameters();
         if (parameters.size() != 1) {
-            logw(TAG, "Method %s with @DataWatch but parameter illegal", methodName);
+            logw(TAG, "%s with @DataWatch but parameter illegal", methodDesc);
             return false;
         }
         TypeName typeName = TypeName.get(parameters.get(0).asType());
         if (typeName instanceof ParameterizedTypeName) {
             ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) typeName;
             if (!parameterizedTypeName.rawType.equals(TypeBox.CHANGE_EVENT)) {
-                logw(TAG, "Method %s with @DataWatch but parameter illegal", methodName);
+                logw(TAG, "%s with @DataWatch but parameter illegal", methodDesc);
                 return false;
             }
         } else if (typeName instanceof ClassName) {
             ClassName className = (ClassName) typeName;
             if (!className.equals(TypeBox.CHANGE_EVENT)) {
-                logw(TAG, "Method %s with @DataWatch but parameter illegal", methodName);
+                logw(TAG, "%s with @DataWatch but parameter illegal", methodDesc);
                 return false;
             }
         } else {

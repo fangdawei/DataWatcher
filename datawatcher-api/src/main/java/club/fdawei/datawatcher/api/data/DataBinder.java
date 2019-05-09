@@ -17,16 +17,16 @@ public class DataBinder implements IDataBinder {
     }
 
     @Override
-    public void onDataChanged(String fieldKey, Object oldValue, Object newValue) {
+    public void onDataChanged(String field, Object oldValue, Object newValue) {
         if (!isValueChanged(oldValue, newValue)) {
             return;
         }
-        notifyWatcher(fieldKey, oldValue, newValue);
+        notifyWatcher(field, oldValue, newValue);
     }
 
-    private void notifyWatcher(String fieldKey, Object oldValue, Object newValue) {
+    private void notifyWatcher(String field, Object oldValue, Object newValue) {
         for (IWatcherProxy watcher : watcherSet) {
-            watcher.onDataChanged(source, fieldKey, oldValue, newValue);
+            watcher.onDataChange(source, field, oldValue, newValue);
         }
     }
 
