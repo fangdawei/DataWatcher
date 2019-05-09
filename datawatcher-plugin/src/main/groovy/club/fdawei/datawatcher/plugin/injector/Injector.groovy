@@ -4,9 +4,9 @@ import javassist.ClassPath
 import javassist.ClassPool
 
 
-class DataWatcherInjector implements InjectHelper {
+class Injector implements InjectHelper {
 
-    private static final String TAG = 'DataWatcherInjector'
+    private static final String TAG = 'Injector'
 
     private final ClassPool classPool = new ClassPool(true)
     private final Collection<ClassPath> classPathList = new LinkedList<>()

@@ -1,9 +1,9 @@
 package club.fdawei.datawatcher.plugin
 
 import club.fdawei.datawatcher.plugin.common.ClassInfoBox
-import club.fdawei.datawatcher.plugin.injector.DataWatcherInjector
 import club.fdawei.datawatcher.plugin.injector.InjectClassInfo
 import club.fdawei.datawatcher.plugin.injector.InjectInfo
+import club.fdawei.datawatcher.plugin.injector.Injector
 import club.fdawei.datawatcher.plugin.log.PluginLogger
 import club.fdawei.datawatcher.plugin.util.JarUtils
 import com.android.build.api.transform.*
@@ -17,7 +17,7 @@ class TransformHandler {
 
     private static final String TAG = 'TransformHandler'
 
-    private final DataWatcherInjector dataWatcherInjector = new DataWatcherInjector()
+    private final Injector injector = new Injector()
     private final List<String> classPathList = new LinkedList<>()
     private final List<InjectInfo> injectInfoList = new LinkedList<>()
     private TransformInvocation transformInvocation
@@ -63,7 +63,7 @@ class TransformHandler {
                 }
         }
         checkExecutor.waitForTasksWithQuickFail(true)
-        dataWatcherInjector.addClassPath(classPathList)
+        injector.addClassPath(classPathList)
         final WaitableExecutor injectExecutor = WaitableExecutor.useGlobalSharedThreadPool()
         injectInfoList.each {
             injectInfo ->
@@ -73,13 +73,13 @@ class TransformHandler {
                 }
         }
         injectExecutor.waitForTasksWithQuickFail(true)
-        dataWatcherInjector.clear()
+        injector.clear()
         def endTimeMillis = System.currentTimeMillis()
         PluginLogger.i(TAG, "transform end, cost time %.3fs", (endTimeMillis - startTimeMillis) / 1000f)
     }
 
     private void handleInject(InjectInfo injectInfo) {
-        dataWatcherInjector.inject(injectInfo)
+        injector.inject(injectInfo)
         switch (injectInfo.type) {
             case InjectInfo.Type.DIR:
                 FileUtils.copyDirectory(injectInfo.sourceDir, injectInfo.destFile)

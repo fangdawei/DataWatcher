@@ -1,17 +1,16 @@
-package club.fdawei.datawatcher.processor;
-
-import club.fdawei.datawatcher.annotation.DataSource;
-import club.fdawei.datawatcher.annotation.DataWatch;
-import club.fdawei.datawatcher.annotation.WatchInherit;
-import club.fdawei.datawatcher.processor.common.CommonTag;
-import club.fdawei.datawatcher.processor.common.UtilProvider;
-import club.fdawei.datawatcher.processor.log.Logger;
-import club.fdawei.datawatcher.processor.source.DataFieldsGenerator;
-import club.fdawei.datawatcher.processor.watcher.WatcherProxyGenerator;
+package club.fdawei.datawatcher.perfectprocessor;
 
 import com.google.auto.service.AutoService;
+import com.sun.source.util.Trees;
 
-import javax.annotation.processing.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Filer;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.Processor;
+import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -19,11 +18,18 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-import java.util.LinkedHashSet;
-import java.util.Set;
+
+import club.fdawei.datawatcher.annotation.DataSource;
+import club.fdawei.datawatcher.annotation.DataWatch;
+import club.fdawei.datawatcher.annotation.WatchInherit;
+import club.fdawei.datawatcher.perfectprocessor.common.CommonTag;
+import club.fdawei.datawatcher.perfectprocessor.common.UtilProvider;
+import club.fdawei.datawatcher.perfectprocessor.log.Logger;
+import club.fdawei.datawatcher.perfectprocessor.source.DataSourceInjector;
+import club.fdawei.datawatcher.perfectprocessor.watcher.WatcherProxyGenerator;
 
 @AutoService(Processor.class)
-public class DataWatcherProcessor extends AbstractProcessor {
+public class DataWatcherPerfectProcessor extends AbstractProcessor {
 
     private static final String TAG = CommonTag.TAG;
 
@@ -32,8 +38,9 @@ public class DataWatcherProcessor extends AbstractProcessor {
     private Types mTypeUtils;
     private UtilProvider mUtilProvider;
     private Logger mLogger;
+    private Trees mTrees;
 
-    private DataFieldsGenerator dataFieldsGenerator = new DataFieldsGenerator();
+    private DataSourceInjector dataSourceInjector = new DataSourceInjector();
     private WatcherProxyGenerator watcherProxyGenerator = new WatcherProxyGenerator();
 
     @Override
@@ -43,6 +50,7 @@ public class DataWatcherProcessor extends AbstractProcessor {
         mElementUtils = processingEnvironment.getElementUtils();
         mTypeUtils = processingEnvironment.getTypeUtils();
         mLogger = new Logger(processingEnvironment.getMessager());
+        mTrees = Trees.instance(processingEnvironment);
         mUtilProvider = new UtilProvider() {
             @Override
             public Elements getElementsUtils() {
@@ -53,9 +61,14 @@ public class DataWatcherProcessor extends AbstractProcessor {
             public Types getTypeUtils() {
                 return mTypeUtils;
             }
+
+            @Override
+            public Trees getTrees() {
+                return mTrees;
+            }
         };
-        dataFieldsGenerator.setLogger(mLogger);
-        dataFieldsGenerator.setUtilProvider(mUtilProvider);
+        dataSourceInjector.setLogger(mLogger);
+        dataSourceInjector.setUtilProvider(mUtilProvider);
         watcherProxyGenerator.setLogger(mLogger);
         watcherProxyGenerator.setUtilProvider(mUtilProvider);
     }
@@ -77,8 +90,8 @@ public class DataWatcherProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
         collectDataSource(roundEnvironment);
-        dataFieldsGenerator.genJavaFile(mFiler);
-        dataFieldsGenerator.clear();
+        dataSourceInjector.injectClass();
+        dataSourceInjector.clear();
 
         collectDataWatch(roundEnvironment);
         collectWatchInherit(roundEnvironment);
@@ -99,7 +112,7 @@ public class DataWatcherProcessor extends AbstractProcessor {
                 continue;
             }
             TypeElement typeElement = (TypeElement) element;
-            dataFieldsGenerator.addTypeWithDataSource(typeElement);
+            dataSourceInjector.addTypeWithDataSource(typeElement);
         }
     }
 
