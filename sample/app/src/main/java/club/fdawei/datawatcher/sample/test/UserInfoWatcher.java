@@ -5,7 +5,6 @@ import android.util.Log;
 import club.fdawei.datawatcher.annotation.DataWatch;
 import club.fdawei.datawatcher.api.data.ChangeEvent;
 import club.fdawei.datawatcher.sample.data.UserInfo;
-import club.fdawei.datawatcher.sample.data.fields_UserInfo;
 
 class UserInfoWatcher {
 

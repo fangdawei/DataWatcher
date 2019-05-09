@@ -2,6 +2,10 @@ package club.fdawei.datawatcher.perfectprocessor;
 
 import com.google.auto.service.AutoService;
 import com.sun.source.util.Trees;
+import com.sun.tools.javac.processing.JavacProcessingEnvironment;
+import com.sun.tools.javac.tree.TreeMaker;
+import com.sun.tools.javac.util.Context;
+import com.sun.tools.javac.util.Names;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -39,6 +43,8 @@ public class DataWatcherPerfectProcessor extends AbstractProcessor {
     private UtilProvider mUtilProvider;
     private Logger mLogger;
     private Trees mTrees;
+    private TreeMaker mTreeMaker;
+    private Names mNames;
 
     private DataSourceInjector dataSourceInjector = new DataSourceInjector();
     private WatcherProxyGenerator watcherProxyGenerator = new WatcherProxyGenerator();
@@ -51,6 +57,9 @@ public class DataWatcherPerfectProcessor extends AbstractProcessor {
         mTypeUtils = processingEnvironment.getTypeUtils();
         mLogger = new Logger(processingEnvironment.getMessager());
         mTrees = Trees.instance(processingEnvironment);
+        Context context = ((JavacProcessingEnvironment) processingEnvironment).getContext();
+        mTreeMaker = TreeMaker.instance(context);
+        mNames = Names.instance(context);
         mUtilProvider = new UtilProvider() {
             @Override
             public Elements getElementsUtils() {
@@ -65,6 +74,16 @@ public class DataWatcherPerfectProcessor extends AbstractProcessor {
             @Override
             public Trees getTrees() {
                 return mTrees;
+            }
+
+            @Override
+            public TreeMaker getTreeMaker() {
+                return mTreeMaker;
+            }
+
+            @Override
+            public Names getNames() {
+                return mNames;
             }
         };
         dataSourceInjector.setLogger(mLogger);
@@ -90,7 +109,7 @@ public class DataWatcherPerfectProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
         collectDataSource(roundEnvironment);
-        dataSourceInjector.injectClass();
+        dataSourceInjector.injectAll();
         dataSourceInjector.clear();
 
         collectDataWatch(roundEnvironment);

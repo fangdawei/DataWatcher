@@ -70,11 +70,6 @@ public class DataWatchOwnerClassInfo extends AnnoWithClassInfo {
                 .build();
         watcherProxyClassBuilder.addMethod(watcherProxyConstructorMethod);
 
-        MethodSpec.Builder initBindKeysMethodBuilder = MethodSpec.methodBuilder("initBindKeys")
-                .addModifiers(Modifier.PROTECTED)
-                .returns(TypeName.VOID)
-                .addAnnotation(Override.class);
-
         MethodSpec.Builder initPublishersMethodBuilder = MethodSpec.methodBuilder("initPublishers")
                 .addModifiers(Modifier.PROTECTED)
                 .returns(TypeName.VOID)
@@ -96,19 +91,11 @@ public class DataWatchOwnerClassInfo extends AnnoWithClassInfo {
                 continue;
             }
 
-            String methodName = executableElement.getSimpleName().toString();
-            String methodBindKeyFieldName = methodName + "_BindKey";
-            FieldSpec methodBindKeyField = FieldSpec.builder(String.class, methodBindKeyFieldName)
-                    .addModifiers(Modifier.PRIVATE)
-                    .build();
-            watcherProxyClassBuilder.addField(methodBindKeyField);
-
             AnnotationValue dataValue = AnnoUtils.getAnnoValue(executableElement, DataWatch.class, "data");
-            if (dataValue != null) {
-                TypeMirror dataClassType = (TypeMirror) dataValue.getValue();
-                String bindKeyStr = FieldDescriptor.of(dataClassType, dataWatch.field());
-                initBindKeysMethodBuilder.addStatement("this.$L = $S", methodBindKeyFieldName, bindKeyStr);
+            if (dataValue == null) {
+                continue;
             }
+            TypeMirror dataClassType = (TypeMirror) dataValue.getValue();
 
             String publisherName = executableElement.getSimpleName().toString() + "_Publisher";
             MethodSpec publishMethod = MethodSpec.methodBuilder("publish")
@@ -122,8 +109,8 @@ public class DataWatchOwnerClassInfo extends AnnoWithClassInfo {
                     .addStatement("return")
                     .endControlFlow()
                     .beginControlFlow("if (!(source instanceof $T) " +
-                            "|| (oldValue != null && !(oldValue instanceof $T)) " +
-                            "|| (newValue != null && !(newValue instanceof $T)))",
+                                    "|| (oldValue != null && !(oldValue instanceof $T)) " +
+                                    "|| (newValue != null && !(newValue instanceof $T)))",
                             sourceType, fieldType, fieldType)
                     .addStatement("return")
                     .endControlFlow()
@@ -138,9 +125,9 @@ public class DataWatchOwnerClassInfo extends AnnoWithClassInfo {
             initPublishersMethodBuilder.addStatement("$T $L = $L", TypeBox.NOTIFY_PUBLISHER, publisherName, publisher);
             initPublishersMethodBuilder.addStatement("$L.setThread($L)", publisherName, dataWatch.thread());
             initPublishersMethodBuilder.addStatement("$L.setNeedNotifyWhenBind($L)", publisherName, dataWatch.notifyWhenBind());
-            initPublishersMethodBuilder.addStatement("registerPublisher($N, $L)", methodBindKeyFieldName, publisherName);
+            initPublishersMethodBuilder.addStatement("registerPublisher($T.class, $S, $L)",
+                    dataClassType, dataWatch.field(), publisherName);
         }
-        watcherProxyClassBuilder.addMethod(initBindKeysMethodBuilder.build());
         watcherProxyClassBuilder.addMethod(initPublishersMethodBuilder.build());
         return watcherProxyClassBuilder.build();
     }
