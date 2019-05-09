@@ -1,14 +1,9 @@
 package club.fdawei.datawatcher.perfectprocessor.source;
 
-import com.sun.source.tree.ClassTree;
 import com.sun.tools.javac.code.Flags;
-import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.tree.TreeScanner;
-import com.sun.tools.javac.util.ListBuffer;
-import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 
 import java.util.LinkedList;
@@ -16,7 +11,6 @@ import java.util.List;
 
 import javax.lang.model.element.TypeElement;
 
-import club.fdawei.datawatcher.perfectprocessor.common.ClassInfoBox;
 import club.fdawei.datawatcher.perfectprocessor.common.CommonTag;
 import club.fdawei.datawatcher.perfectprocessor.common.JavaClassHandler;
 import club.fdawei.datawatcher.perfectprocessor.common.TypeBox;
@@ -54,7 +48,9 @@ public class DataSourceInjector extends JavaClassHandler {
                 (JCTree.JCClassDecl) getUtilProvider().getTrees().getTree(dataSource.getTypeElement());
         logw(TAG, "" + dataSourceDecl.toString());
         addIDataBinderImplement(dataSourceDecl);
+        addFieldDataBinder(dataSourceDecl);
         addMethodGetDataBinder(dataSourceDecl);
+        addMethodGetAllFieldValue(dataSourceDecl);
         logw(TAG, "" + dataSourceDecl.toString());
     }
 
@@ -72,12 +68,28 @@ public class DataSourceInjector extends JavaClassHandler {
     }
 
     private void addFieldDataBinder(JCTree.JCClassDecl dataSourceDecl) {
-
+        TreeMaker treeMaker = getUtilProvider().getTreeMaker();
+        Names names = getUtilProvider().getNames();
+        JCTree.JCVariableDecl decl = treeMaker.VarDef(
+                treeMaker.Modifiers(Flags.PRIVATE),
+                names.fromString("dataBinder"),
+                treeMaker.Ident(names.fromString(TypeBox.I_DATA_BINDER.toString())),
+                treeMaker.NewClass(
+                        null,
+                        null,
+                        treeMaker.Ident(names.fromString(TypeBox.DATA_BINDER.toString())),
+                        com.sun.tools.javac.util.List.of(treeMaker.Ident(names.fromString("this"))),
+                        null
+                )
+        );
+        dataSourceDecl.defs = dataSourceDecl.defs.prepend(decl);
     }
 
     private void addMethodGetDataBinder(JCTree.JCClassDecl dataSourceDecl) {
         TreeMaker treeMaker = getUtilProvider().getTreeMaker();
         Names names = getUtilProvider().getNames();
+        JCTree.JCReturn returnExpr = treeMaker.Return(treeMaker.Select(
+                treeMaker.Ident(names.fromString("this")), names.fromString("")));
         JCTree.JCMethodDecl methodDecl = treeMaker.MethodDef(
                 treeMaker.Modifiers(Flags.PUBLIC),
                 names.fromString("getDataBinder"),
@@ -85,9 +97,24 @@ public class DataSourceInjector extends JavaClassHandler {
                 com.sun.tools.javac.util.List.nil(),
                 com.sun.tools.javac.util.List.nil(),
                 com.sun.tools.javac.util.List.nil(),
-                treeMaker.Block(0, com.sun.tools.javac.util.List.nil()),
+                treeMaker.Block(0, com.sun.tools.javac.util.List.of(returnExpr)),
                 null
                 );
         dataSourceDecl.defs = dataSourceDecl.defs.append(methodDecl);
+    }
+
+    private void addMethodGetAllFieldValue(JCTree.JCClassDecl dataSourceDecl) {
+        TreeMaker treeMaker = getUtilProvider().getTreeMaker();
+        Names names = getUtilProvider().getNames();
+        dataSourceDecl.accept(new TreeScanner() {
+            @Override
+            public void visitVarDef(JCTree.JCVariableDecl jcVariableDecl) {
+
+            }
+        });
+        treeMaker.MethodDef(
+                treeMaker.Modifiers(Flags.PUBLIC),
+                names.fromString("getAllFieldValue"),
+        );
     }
 }
