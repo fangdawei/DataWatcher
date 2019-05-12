@@ -39,7 +39,8 @@ dependencies {
 
     implementation project(':datawatcher-annotation')
     implementation project(':datawatcher-api')
-    kapt project(':datawatcher-processor')
+//    kapt project(':datawatcher-processor')
+    kapt project(':datawatcher-perfectprocessor')
 }
 
 repositories {

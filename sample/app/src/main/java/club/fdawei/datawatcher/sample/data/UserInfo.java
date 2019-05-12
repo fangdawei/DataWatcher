@@ -1,7 +1,5 @@
 package club.fdawei.datawatcher.sample.data;
 
-import java.io.Serializable;
-
 import club.fdawei.datawatcher.annotation.DataSource;
 import club.fdawei.datawatcher.annotation.FieldIgnore;
 import club.fdawei.datawatcher.annotation.FieldSetter;

@@ -4,10 +4,13 @@ import java.util.LinkedList;
 import java.util.List;
 
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 
+import club.fdawei.datawatcher.annotation.DataSource;
+import club.fdawei.datawatcher.annotation.FieldIgnore;
+import club.fdawei.datawatcher.annotation.FieldSetter;
 import club.fdawei.datawatcher.perfectprocessor.common.AnnoWithClassInfo;
 
 /**
@@ -17,7 +20,8 @@ public class DataSourceClassInfo extends AnnoWithClassInfo {
 
     private String pkgName;
     private TypeElement typeElement;
-    private List<VariableElement> fieldList;
+    private List<VariableElement> dataFieldList;
+    private List<ExecutableElement> possibleSetterMethodList;
 
     public DataSourceClassInfo(String pkgName, TypeElement typeElement) {
         this.pkgName = pkgName;
@@ -32,18 +36,49 @@ public class DataSourceClassInfo extends AnnoWithClassInfo {
         return typeElement;
     }
 
-    public List<VariableElement> getFieldList() {
-        if (fieldList == null) {
-            fieldList = new LinkedList<>();
-            List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
-            for(Element element : enclosedElements) {
-                if (element.getKind() != ElementKind.FIELD) {
-                    continue;
-                }
-                VariableElement variableElement = (VariableElement) element;
-                fieldList.add(variableElement);
+    private void checkFieldsAndMethods() {
+        dataFieldList = new LinkedList<>();
+        possibleSetterMethodList = new LinkedList<>();
+        DataSource annoDataSource = typeElement.getAnnotation(DataSource.class);
+        boolean autoFindSetter = annoDataSource.setterAutoFind();
+        List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
+        for (Element element : enclosedElements) {
+            switch (element.getKind()) {
+                case FIELD:
+                    VariableElement varElement = (VariableElement) element;
+                    if (varElement.getAnnotation(FieldIgnore.class) == null) {
+                        dataFieldList.add(varElement);
+                    }
+                    break;
+                case METHOD:
+                    ExecutableElement execElement = (ExecutableElement) element;
+                    if (autoFindSetter) {
+                        possibleSetterMethodList.add(execElement);
+                    } else {
+                        if (execElement.getAnnotation(FieldSetter.class) != null) {
+                            possibleSetterMethodList.add(execElement);
+                        }
+                    }
+                    break;
+                default:
+                    break;
             }
         }
-        return fieldList;
+    }
+
+    public List<VariableElement> getDataFields() {
+        if (dataFieldList != null) {
+            return dataFieldList;
+        }
+        checkFieldsAndMethods();
+        return dataFieldList;
+    }
+
+    public List<ExecutableElement> getPossibleSetterMethods() {
+        if (possibleSetterMethodList != null) {
+            return possibleSetterMethodList;
+        }
+        checkFieldsAndMethods();
+        return possibleSetterMethodList;
     }
 }
