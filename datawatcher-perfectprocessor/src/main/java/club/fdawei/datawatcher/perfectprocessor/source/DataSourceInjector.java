@@ -30,14 +30,15 @@ public class DataSourceInjector extends JavaClassHandler {
         dataSourceList.clear();
     }
 
-    public void injectAll() {
+    public void inject() {
         for (DataSourceClassInfo dataSourceClassInfo : dataSourceList) {
-            InjectHandler handler = new InjectHandler(dataSourceClassInfo);
-            handler.setTrees(getUtilProvider().getTrees());
-            handler.setNames(getUtilProvider().getNames());
-            handler.setTreeMaker(getUtilProvider().getTreeMaker());
-            handler.setLogger(this);
-            handler.inject();
+            InjectHandler.builder(dataSourceClassInfo)
+                    .trees(getUtilProvider().getTrees())
+                    .names(getUtilProvider().getNames())
+                    .treeMaker(getUtilProvider().getTreeMaker())
+                    .logger(this)
+                    .build()
+                    .inject();
         }
     }
 }

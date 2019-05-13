@@ -109,7 +109,7 @@ public class DataWatcherPerfectProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
         collectDataSource(roundEnvironment);
-        dataSourceInjector.injectAll();
+        dataSourceInjector.inject();
         dataSourceInjector.clear();
 
         collectDataWatch(roundEnvironment);

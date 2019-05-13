@@ -38,25 +38,45 @@ public class InjectHandler {
     private JCTree.JCCompilationUnit compilationUnit;
     private JCTree.JCClassDecl dataSourceDecl;
 
-
-    public InjectHandler(DataSourceClassInfo dataSource) {
+    private InjectHandler(DataSourceClassInfo dataSource) {
         this.dataSource = dataSource;
     }
 
-    public void setTrees(Trees trees) {
-        this.trees = trees;
+    public static Builder builder(DataSourceClassInfo dataSource) {
+        return new Builder(dataSource);
     }
 
-    public void setTreeMaker(TreeMaker treeMaker) {
-        this.treeMaker = treeMaker;
-    }
+    public static class Builder {
 
-    public void setNames(Names names) {
-        this.names = names;
-    }
+        private InjectHandler handler;
 
-    public void setLogger(ILogger logger) {
-        this.logger = logger;
+        private Builder(DataSourceClassInfo dataSource) {
+            this.handler = new InjectHandler(dataSource);
+        }
+
+        public Builder trees(Trees trees) {
+            this.handler.trees = trees;
+            return this;
+        }
+
+        public Builder names(Names names) {
+            this.handler.names = names;
+            return this;
+        }
+
+        public Builder treeMaker(TreeMaker treeMaker) {
+            this.handler.treeMaker = treeMaker;
+            return this;
+        }
+
+        public Builder logger(ILogger logger) {
+            this.handler.logger = logger;
+            return this;
+        }
+
+        public InjectHandler build() {
+            return handler;
+        }
     }
 
     private boolean checkValid() {
@@ -156,14 +176,12 @@ public class InjectHandler {
                 List.nil(),
                 List.nil(),
                 List.nil(),
-                treeMaker.Block(0, List.of(
-                        treeMaker.Return(
-                                treeMaker.Select(
-                                        _ident("this"),
-                                        names.fromString(FIELD_DATABINDER_NAME)
-                                )
+                treeMaker.Block(0, List.of(treeMaker.Return(
+                        treeMaker.Select(
+                                _ident("this"),
+                                names.fromString(FIELD_DATABINDER_NAME)
                         )
-                )),
+                ))),
                 null
         );
         dataSourceDecl.defs = dataSourceDecl.defs.append(methodDecl);
@@ -279,8 +297,6 @@ public class InjectHandler {
     }
 
     private JCTree.JCExpressionStatement _execApply(JCTree.JCExpression fn, List<JCTree.JCExpression> args) {
-        return treeMaker.Exec(
-                treeMaker.Apply(List.nil(), fn, args)
-        );
+        return treeMaker.Exec(treeMaker.Apply(List.nil(), fn, args));
     }
 }
