@@ -92,7 +92,7 @@ public abstract class AbsWatcherProxy<TARGET> implements IWatcherProxy {
     }
 
     @Override
-    public boolean isBlongTarget(Object target) {
+    public boolean isBelongTarget(Object target) {
         if (targetRef.get() == null) {
             return false;
         }

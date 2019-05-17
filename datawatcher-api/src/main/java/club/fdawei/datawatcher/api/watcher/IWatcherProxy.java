@@ -8,7 +8,7 @@ public interface IWatcherProxy {
 
     void onDataBind(Object source, String field, Object value);
 
-    boolean isBlongTarget(Object target);
+    boolean isBelongTarget(Object target);
 
     boolean isTargetAlive();
 }

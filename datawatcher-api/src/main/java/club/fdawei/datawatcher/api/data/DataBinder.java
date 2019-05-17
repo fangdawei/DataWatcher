@@ -60,7 +60,7 @@ public class DataBinder implements IDataBinder {
             return;
         }
         for(IWatcherProxy watcherProxy : watcherSet) {
-            if (watcherProxy.isBlongTarget(target)) {
+            if (watcherProxy.isBelongTarget(target)) {
                 watcherSet.remove(watcherProxy);
             } else if (!watcherProxy.isTargetAlive()) {
                 watcherSet.remove(watcherProxy);
