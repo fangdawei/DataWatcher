@@ -29,7 +29,8 @@ class DataWatcherTransform extends Transform {
     }
 
     @Override
-    void transform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {
+    void transform(TransformInvocation transformInvocation)
+            throws TransformException, InterruptedException, IOException {
         new TransformHandler(transformInvocation).transform()
     }
 }
