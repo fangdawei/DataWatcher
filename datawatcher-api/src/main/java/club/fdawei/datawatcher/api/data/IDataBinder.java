@@ -1,13 +1,14 @@
 package club.fdawei.datawatcher.api.data;
 
+import club.fdawei.datawatcher.api.watcher.IWatcherProxy;
 
 public interface IDataBinder {
 
     void onDataChanged(String fieldKey, Object oldValue, Object newValue);
 
-    void addWatcher(Object target);
+    void addWatcher(IWatcherProxy watcher);
 
-    void removeWatcher(Object target);
+    void removeWatcher(IWatcherProxy watcher);
 
     boolean hasWatcher();
 

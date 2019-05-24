@@ -1,11 +1,12 @@
 package club.fdawei.datawatcher.plugin.injector
 
-class InjectClassInfo {
+
+class InjectEntityInfo {
 
     private String name
     private Type type
 
-    InjectClassInfo(String name, Type type) {
+    InjectEntityInfo(String name, Type type) {
         this.name = name
         this.type = type
     }
@@ -20,14 +21,13 @@ class InjectClassInfo {
 
     @Override
     String toString() {
-        return "InjectClassInfo{" +
+        return "InjectEntityInfo{" +
                 "name='" + name + '\'' +
                 ", type=" + type +
                 '}'
     }
 
-
     enum Type {
-        DATA_FIELDS
+        DATA_FIELDS, WATCHER_PROXY
     }
 }

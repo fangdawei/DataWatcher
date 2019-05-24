@@ -2,7 +2,7 @@ package club.fdawei.datawatcher.sample.kt
 
 import android.content.Context
 import android.widget.Toast
-import club.fdawei.datawatcher.annotation.DataWatch
+import club.fdawei.datawatcher.annotation.WatchData
 import club.fdawei.datawatcher.api.data.ChangeEvent
 
 /**
@@ -10,7 +10,7 @@ import club.fdawei.datawatcher.api.data.ChangeEvent
  */
 class FoodWatcher constructor(private val context: Context) {
 
-    @DataWatch(data = Food::class, field = "name", thread = DataWatch.Thread.MAIN)
+    @WatchData(data = Food::class, field = "name", thread = WatchData.Thread.MAIN)
     fun onNameUpdate(event: ChangeEvent<Food, String>) {
         Toast.makeText(context, "FoodWatcher onNameUpdate ${event.newValue}",
             Toast.LENGTH_SHORT).show()

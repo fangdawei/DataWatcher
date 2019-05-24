@@ -10,6 +10,9 @@ class DataWatcherPlugin implements Plugin<Project> {
 
     void apply(Project project) {
         def android = project.extensions.findByType(AppExtension)
-        android.registerTransform(new DataWatcherTransform())
+        if (android != null) {
+            def transform = new DataWatcherTransform(project)
+            android.registerTransform(transform)
+        }
     }
 }

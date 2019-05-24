@@ -4,7 +4,6 @@ package club.fdawei.datawatcher.api.watcher;
 import android.support.annotation.Nullable;
 
 import java.lang.ref.WeakReference;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -51,8 +50,8 @@ public abstract class AbsWatcherProxy<TARGET> implements IWatcherProxy {
     }
 
     @Override
-    public void onDataBind(Object source, String field, Object value) {
-        dispatchDataBind(source, field, value);
+    public void onBindData(Object source, String field, Object value) {
+        dispatchBindData(source, field, value);
     }
 
     private void dispatchDataChange(Object source, String field, Object oldValue, Object newValue) {
@@ -68,7 +67,7 @@ public abstract class AbsWatcherProxy<TARGET> implements IWatcherProxy {
         }
     }
 
-    private void dispatchDataBind(Object source, String field, Object value) {
+    private void dispatchBindData(Object source, String field, Object value) {
         if (!isTargetAlive()) {
             return;
         }
@@ -92,24 +91,7 @@ public abstract class AbsWatcherProxy<TARGET> implements IWatcherProxy {
     }
 
     @Override
-    public boolean isBlongTarget(Object target) {
-        if (targetRef.get() == null) {
-            return false;
-        }
-        return targetRef.get() == target;
-    }
-
-    @Override
     public boolean isTargetAlive() {
         return targetRef.get() != null;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof AbsWatcherProxy) {
-            return this.targetRef.get() == ((AbsWatcherProxy) obj).targetRef.get();
-        } else {
-            return false;
-        }
     }
 }

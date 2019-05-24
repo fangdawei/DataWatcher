@@ -3,7 +3,7 @@ package club.fdawei.datawatcher.sample.sub;
 import android.content.Context;
 import android.widget.Toast;
 
-import club.fdawei.datawatcher.annotation.DataWatch;
+import club.fdawei.datawatcher.annotation.WatchData;
 import club.fdawei.datawatcher.api.data.ChangeEvent;
 
 public class CountryWatcher {
@@ -14,7 +14,7 @@ public class CountryWatcher {
         this.context = context;
     }
 
-    @DataWatch(data = Country.class, field = "name", notifyWhenBind = false)
+    @WatchData(data = Country.class, field = "name", notifyWhenBind = false)
     public void onNameChange(ChangeEvent<Country, String> event) {
         Toast.makeText(context, "Country name is " + event.getNewValue(), Toast.LENGTH_SHORT).show();
     }
@@ -29,7 +29,7 @@ public class CountryWatcher {
             this.watcherName = "ProvinceWatcher";
         }
 
-        @DataWatch(data = Country.Province.class, field = "name", notifyWhenBind = false)
+        @WatchData(data = Country.Province.class, field = "name", notifyWhenBind = false)
         public void onNameChange(ChangeEvent<Country.Province, String> event) {
             Toast.makeText(context, "Province name is " + event.getNewValue(), Toast.LENGTH_SHORT).show();
         }
@@ -44,7 +44,7 @@ public class CountryWatcher {
                 this.watcherName = "CityWatcher";
             }
 
-            @DataWatch(data = Country.Province.City.class, field = "name", notifyWhenBind = false)
+            @WatchData(data = Country.Province.City.class, field = "name", notifyWhenBind = false)
             public void onNameChange(ChangeEvent<Country.Province.City, String> event) {
                 Toast.makeText(context, "City name is " + event.getNewValue(), Toast.LENGTH_SHORT).show();
             }

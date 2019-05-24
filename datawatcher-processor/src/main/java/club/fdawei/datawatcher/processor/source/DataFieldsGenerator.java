@@ -65,7 +65,7 @@ public class DataFieldsGenerator extends JavaClassGenerator {
             String pkgName = dataSourceClass.getPkgName();
             String classSimpleName = dataSourceClass.getSimpleName();
             JavaFile javaFile = JavaFile.builder(dataSourceClass.getPkgName(), dataSourceClass.buildTypeSpec())
-                    .addFileComment("Generated automatically. Do not modify!")
+                    .addFileComment("Generated automatically by DataWatcher. Do not modify!")
                     .build();
             try {
                 javaFile.writeTo(filer);

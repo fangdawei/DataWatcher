@@ -38,6 +38,13 @@ public class AnnoUtils {
         return null;
     }
 
+    /**
+     * 获取Element的注解指定字段的值
+     * @param element 别注解的Element
+     * @param annoClz 注解Class
+     * @param key 注解的字段名称
+     * @return AnnotationValue
+     */
     public static AnnotationValue getAnnoValue(Element element, Class<? extends Annotation> annoClz, String key) {
         return getAnnoValue(getAnnoMirror(element, annoClz), key);
     }

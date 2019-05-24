@@ -1,6 +1,7 @@
 package club.fdawei.datawatcher.plugin.injector
 
-import club.fdawei.datawatcher.plugin.common.ClassInfoBox
+import club.fdawei.datawatcher.plugin.common.ClassBox
+import club.fdawei.datawatcher.plugin.util.ClassUtils
 import javassist.*
 import javassist.bytecode.AnnotationsAttribute
 import javassist.bytecode.annotation.BooleanMemberValue
@@ -8,59 +9,67 @@ import javassist.bytecode.annotation.StringMemberValue
 import javassist.expr.ExprEditor
 import javassist.expr.FieldAccess
 
-class DataSourceHandler extends ClassHandler {
+class DataClassHandler extends ClassHandler {
 
-    private static final String TAG = 'DataSourceHandler'
+    private static final String TAG = 'DataClassHandler'
 
-    DataSourceHandler(InjectHelper helper) {
-        super(helper)
+    DataClassHandler(IInjector injector) {
+        super(injector)
     }
 
+    @Override
     void handle(File classFile, File dir) {
         if (classFile == null || !classFile.exists()) {
             return
         }
-        def dataFieldsClassName = getClassNameFromFile(classFile, dir)
-        def dataFieldsCtClass = helper.classPool.getCtClass(dataFieldsClassName)
-        handleDataFieldsClass(dataFieldsCtClass, dir)
+        def fieldsClassName = ClassUtils.getClassNameFromFile(classFile, dir)
+        def fieldsCtClass = injector.classPool.getCtClass(fieldsClassName)
+        if (dataFieldsValid(fieldsCtClass)) {
+            handleDataFieldsClass(fieldsCtClass, dir)
+        }
+    }
+
+    private boolean dataFieldsValid(CtClass dataFields) {
+        return ClassUtils.isCtClassWithAnno(dataFields, ClassBox.DataFields.ANNO_TYPE_NAME, false)
     }
 
     private void handleDataFieldsClass(CtClass dataFieldsCtClass, File dir) {
-        def sourceField = dataFieldsCtClass.getDeclaredField(ClassInfoBox.DataFields.FIELD_SOURCE_NAME)
-        def dataSourceCtClass = sourceField.type
-        if (dataSourceCtClass.isFrozen()) {
-            dataSourceCtClass.defrost()
+        def sourceField = dataFieldsCtClass.getDeclaredField(ClassBox.DataFields.FIELD_SOURCE)
+        def sourceCtClass = sourceField.type
+        if (sourceCtClass.isFrozen()) {
+            sourceCtClass.defrost()
         }
-        addDataBinderField(dataSourceCtClass)
-        addIDataSourceInterface(dataSourceCtClass)
-        addGetDataBinderMethod(dataSourceCtClass)
-        addGetAllFieldValueMethod(dataSourceCtClass, dataFieldsCtClass)
-        hookAllSetterMethod(dataSourceCtClass, dataFieldsCtClass)
-        dataSourceCtClass.writeFile(dir.absolutePath)
-        dataSourceCtClass.detach()
+        addDataBinderField(sourceCtClass)
+        addIDataSourceInterface(sourceCtClass)
+        addGetDataBinderMethod(sourceCtClass)
+        addGetAllFieldValueMethod(sourceCtClass, dataFieldsCtClass)
+        hookAllSetterMethod(sourceCtClass, dataFieldsCtClass)
+        sourceCtClass.writeFile(dir.absolutePath)
+        sourceCtClass.detach()
     }
 
     private void addDataBinderField(CtClass ctClass) {
-        def src = "private final ${ClassInfoBox.IDataBinder.NAME} dataBinder = new ${ClassInfoBox.DataBinder.NAME}(this);"
+        def src = "private final ${ClassBox.IDataBinder.NAME} ${ClassBox.IDataSource.FIELD_DATA_BINDER} " +
+                "= new ${ClassBox.DataBinder.NAME}(this);"
         def dataBinderCtField = CtField.make(src, ctClass)
         ctClass.addField(dataBinderCtField)
     }
 
     private void addIDataSourceInterface(CtClass ctClass) {
-        def iDataSourceCtClass = helper.classPool.getCtClass(ClassInfoBox.IDataSource.NAME)
-        ctClass.addInterface(iDataSourceCtClass)
+        ctClass.addInterface(injector.classPool.getCtClass(ClassBox.IDataSource.NAME))
     }
 
     private void addGetDataBinderMethod(CtClass ctClass) {
-        def src = "public ${ClassInfoBox.IDataBinder.NAME} getDataBinder() {return dataBinder;}"
+        def src = "public ${ClassBox.IDataBinder.NAME} ${ClassBox.IDataSource.METHOD_GET_DATA_BINDER}() " +
+                "{return ${ClassBox.IDataSource.FIELD_DATA_BINDER};}"
         def getDataBinderCtMethod = CtMethod.make(src, ctClass)
         ctClass.addMethod(getDataBinderCtMethod)
     }
 
     private void addGetAllFieldValueMethod(CtClass ctClass, CtClass fieldsCtClass) {
         def srcBuilder = new StringBuilder()
-        srcBuilder.append("public ${ClassInfoBox.Map.NAME} getAllFieldValue() {")
-        srcBuilder.append("${ClassInfoBox.Map.NAME} map = new ${ClassInfoBox.HashMap.NAME}();")
+        srcBuilder.append("public ${ClassBox.Map.NAME} ${ClassBox.IDataSource.METHOD_GET_ALL_FIELD_VALUE}() {")
+        srcBuilder.append("${ClassBox.Map.NAME} map = new ${ClassBox.HashMap.NAME}();")
         fieldsCtClass.declaredFields.findAll {
             ctField -> isFieldKey(ctField)
         }.each {
@@ -101,8 +110,8 @@ class DataSourceHandler extends ClassHandler {
     }
 
     private boolean isFieldKey(CtField ctField) {
-        CtClass stringCtClass = helper.classPool.getCtClass(ClassInfoBox.LString.NAME)
-        return ctField.name != ClassInfoBox.DataFields.FIELD_SOURCE_NAME &&
+        CtClass stringCtClass = injector.classPool.getCtClass(ClassBox.LString.NAME)
+        return ctField.name != ClassBox.DataFields.FIELD_SOURCE &&
                 ctField.type == stringCtClass &&
                 Modifier.isPublic(ctField.getModifiers())
     }
@@ -113,11 +122,11 @@ class DataSourceHandler extends ClassHandler {
             return false
         }
         def annotationsAttribute = attributeInfo as AnnotationsAttribute
-        def annotation = annotationsAttribute.getAnnotation(ClassInfoBox.DataSource.NAME)
+        def annotation = annotationsAttribute.getAnnotation(ClassBox.DataSource.NAME)
         if (annotation == null) {
             return false
         }
-        def memberValue = annotation.getMemberValue(ClassInfoBox.DataSource.PROPERTY_AUTO_FIND_SETTER_NAME)
+        def memberValue = annotation.getMemberValue(ClassBox.DataSource.PROPERTY_AUTO_FIND_SETTER)
         if (memberValue == null) {
             return true
         }
@@ -136,14 +145,18 @@ class DataSourceHandler extends ClassHandler {
                                 .append("${wrapperTypeName} _oldValue = new ${wrapperTypeName}(this.${f.field.name});")
                                 .append("${wrapperTypeName} _newValue = new ${wrapperTypeName}(\$1);")
                                 .append("\$proceed(\$\$);")
-                                .append("this.dataBinder.${ClassInfoBox.DataBinder.METHOD_ON_DATA_CHANGED_NAME}(\"${f.field.name}\", _oldValue, _newValue);")
+                                .append("this.${ClassBox.IDataSource.FIELD_DATA_BINDER}" +
+                                ".${ClassBox.DataBinder.METHOD_ON_DATA_CHANGED}" +
+                                "(\"${f.field.name}\", _oldValue, _newValue);")
                                 .toString()
                     } else {
                         replaceSrc = new StringBuilder()
                                 .append("${f.field.type.name} _oldValue = this.${f.field.name};")
                                 .append("${f.field.type.name} _newValue = \$1;")
                                 .append("\$proceed(\$\$);")
-                                .append("this.dataBinder.${ClassInfoBox.DataBinder.METHOD_ON_DATA_CHANGED_NAME}(\"${f.field.name}\", _oldValue, _newValue);")
+                                .append("this.${ClassBox.IDataSource.FIELD_DATA_BINDER}" +
+                                ".${ClassBox.DataBinder.METHOD_ON_DATA_CHANGED}" +
+                                "(\"${f.field.name}\", _oldValue, _newValue);")
                                 .toString()
                     }
                     f.replace(replaceSrc)
@@ -168,11 +181,11 @@ class DataSourceHandler extends ClassHandler {
             return null
         }
         def annotationsAttribute = attributeInfo as AnnotationsAttribute
-        def fieldSetterAnnotation = annotationsAttribute.getAnnotation(ClassInfoBox.FieldSetter.NAME)
+        def fieldSetterAnnotation = annotationsAttribute.getAnnotation(ClassBox.FieldSetter.NAME)
         if (fieldSetterAnnotation == null) {
             return null
         }
-        def memberValue = fieldSetterAnnotation.getMemberValue(ClassInfoBox.FieldSetter.PROPERTY_FIELD_NAME)
+        def memberValue = fieldSetterAnnotation.getMemberValue(ClassBox.FieldSetter.PROPERTY_FIELD)
         String setterFieldName = (memberValue as StringMemberValue).value
         return ctMethod.getDeclaringClass().getDeclaredField(setterFieldName)
     }

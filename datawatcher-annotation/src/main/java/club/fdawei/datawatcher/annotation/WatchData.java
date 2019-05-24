@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.METHOD)
-public @interface DataWatch {
+public @interface WatchData {
 
     Class<?> data();
 

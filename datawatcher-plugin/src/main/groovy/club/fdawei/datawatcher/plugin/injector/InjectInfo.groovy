@@ -4,7 +4,7 @@ package club.fdawei.datawatcher.plugin.injector
 class InjectInfo {
 
     private File sourceDir
-    private List<InjectClassInfo> classInfoList
+    private List<InjectEntityInfo> entityList
     private File destFile
     private Type type
 
@@ -14,16 +14,16 @@ class InjectInfo {
         this.type = type
     }
 
-    void setClassInfoList(List<InjectClassInfo> classInfoList) {
-        this.classInfoList = classInfoList
+    void setEntityList(List<InjectEntityInfo> list) {
+        this.entityList = list
     }
 
     File getSourceDir() {
         return sourceDir
     }
 
-    List<InjectClassInfo> getClassInfoList() {
-        return classInfoList
+    List<InjectEntityInfo> getEntityList() {
+        return entityList
     }
 
     File getDestFile() {
@@ -38,7 +38,7 @@ class InjectInfo {
     String toString() {
         return "InjectInfo{" +
                 "sourceDir=" + sourceDir +
-                ", classInfoList size=" + (classInfoList == null ? 0 : classInfoList.size()) +
+                ", entityList size=" + (entityList == null ? 0 : entityList.size()) +
                 ", type=" + type +
                 ", destFile=" + destFile.absolutePath +
                 '}'

@@ -9,14 +9,15 @@ import java.util.List;
 import java.util.Map;
 
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 
+import club.fdawei.datawatcher.annotation.DataFields;
 import club.fdawei.datawatcher.annotation.FieldIgnore;
 import club.fdawei.datawatcher.processor.common.AnnoWithClassInfo;
 import club.fdawei.datawatcher.processor.common.ClassInfoBox;
-import club.fdawei.datawatcher.processor.common.FieldDescriptor;
 
 
 /**
@@ -68,11 +69,12 @@ public class DataSourceClassInfo extends AnnoWithClassInfo {
             classBuilder = TypeSpec.classBuilder(simpleName)
                     .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL);
         }
+        classBuilder.addAnnotation(DataFields.class);
         if (typeElement != null) {
             classBuilder.addField(TypeName.get(typeElement.asType()), ClassInfoBox.DataFields.FIELD_SOURCE_NAME, Modifier.PRIVATE);
             List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
             for (Element element : enclosedElements) {
-                if (!(element instanceof VariableElement)) {
+                if (element.getKind() != ElementKind.FIELD) {
                     continue;
                 }
                 VariableElement variableElement = (VariableElement) element;
@@ -80,10 +82,9 @@ public class DataSourceClassInfo extends AnnoWithClassInfo {
                     continue;
                 }
                 String filedName = variableElement.getSimpleName().toString();
-                String filedValue = FieldDescriptor.of(typeElement, filedName);
                 FieldSpec fieldSpec = FieldSpec.builder(String.class, filedName)
                         .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-                        .initializer("$S", filedValue)
+                        .initializer("$S", filedName)
                         .build();
                 classBuilder.addField(fieldSpec);
             }

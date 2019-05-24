@@ -1,17 +1,19 @@
 package club.fdawei.datawatcher.plugin.injector
 
+
 import javassist.ClassPath
 import javassist.ClassPool
 
+class InjectorImpl implements IInjector {
 
-class DataWatcherInjector implements InjectHelper {
-
-    private static final String TAG = 'DataWatcherInjector'
+    private static final String TAG = 'Injector'
 
     private final ClassPool classPool = new ClassPool(true)
     private final Collection<ClassPath> classPathList = new LinkedList<>()
-    private final DataSourceHandler dataSourceHandler = new DataSourceHandler(this)
+    private final ClassHandler dataHandler = new DataClassHandler(this)
+    private final ClassHandler watcherHandler = new WatcherClassHandler(this)
 
+    @Override
     void addClassPath(List<String> pathList) {
         if (pathList == null) {
             return
@@ -22,23 +24,28 @@ class DataWatcherInjector implements InjectHelper {
         }
     }
 
+    @Override
     void inject(InjectInfo injectInfo) {
         if (!isInjectInfoValid(injectInfo)) {
             return
         }
-        if (injectInfo.classInfoList == null) {
+        if (injectInfo.entityList == null) {
             return
         }
-        injectInfo.classInfoList.each {
+        injectInfo.entityList.each {
             def classFile = new File(injectInfo.sourceDir, it.name)
             switch (it.type) {
-                case InjectClassInfo.Type.DATA_FIELDS:
-                    dataSourceHandler.handle(classFile, injectInfo.sourceDir)
+                case InjectEntityInfo.Type.DATA_FIELDS:
+                    dataHandler.handle(classFile, injectInfo.sourceDir)
+                    break
+                case InjectEntityInfo.Type.WATCHER_PROXY:
+                    watcherHandler.handle(classFile, injectInfo.sourceDir)
                     break
             }
         }
     }
 
+    @Override
     void clear() {
         classPathList.each {
             classPool.removeClassPath(it)

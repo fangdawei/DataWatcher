@@ -1,6 +1,6 @@
 package club.fdawei.datawatcher.api.watcher;
 
-import club.fdawei.datawatcher.annotation.DataWatch;
+import club.fdawei.datawatcher.annotation.WatchData;
 import club.fdawei.datawatcher.api.task.TaskExecutor;
 
 /**
@@ -8,7 +8,7 @@ import club.fdawei.datawatcher.api.task.TaskExecutor;
  */
 public abstract class WatcherNotifyPublisher {
 
-    private int thread = DataWatch.Thread.CURRENT;
+    private int thread = WatchData.Thread.CURRENT;
     private boolean needNotifyWhenBind = true;
 
     public void setThread(int thread) {
@@ -26,14 +26,14 @@ public abstract class WatcherNotifyPublisher {
     protected abstract void publish(Object source, Object oldValue, Object newValue);
 
     public void notifyWatcher(final Object source, final Object oldValue, final Object newValue) {
-        if (thread == DataWatch.Thread.MAIN) {
+        if (thread == WatchData.Thread.MAIN) {
             TaskExecutor.postToMainThread(new Runnable() {
                 @Override
                 public void run() {
                     publish(source, oldValue, newValue);
                 }
             });
-        } else if (thread == DataWatch.Thread.WORK_THREAD) {
+        } else if (thread == WatchData.Thread.WORK_THREAD) {
             TaskExecutor.postToWorkThread(new Runnable() {
                 @Override
                 public void run() {
