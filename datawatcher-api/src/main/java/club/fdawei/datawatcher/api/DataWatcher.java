@@ -5,16 +5,20 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import club.fdawei.datawatcher.api.common.Config;
 import club.fdawei.datawatcher.api.data.IDataBinder;
 import club.fdawei.datawatcher.api.data.IDataSource;
 import club.fdawei.datawatcher.api.log.ILogger;
 import club.fdawei.datawatcher.api.log.Logger;
 import club.fdawei.datawatcher.api.task.ITaskExecutor;
 import club.fdawei.datawatcher.api.task.TaskExecutor;
+import club.fdawei.datawatcher.api.watcher.IWatcherProxy;
+import club.fdawei.datawatcher.api.watcher.IWatcherTarget;
 
 public class DataWatcher {
 
-    private static final Set<IDataSource> dataSourceSet =
+    private static Config sConfig = new Config();
+    private static final Set<IDataSource> sDataSourceSet =
             Collections.newSetFromMap(new ConcurrentHashMap<IDataSource, Boolean>());
 
     public static void init(ITaskExecutor taskExecutor) {
@@ -27,36 +31,41 @@ public class DataWatcher {
     }
 
     public static void bind(Object target, Object source) {
-        if (!checkTarget(target) || !checkSource(source)) {
+        if (targetIllegal(target) || sourceIllegal(source)) {
             return;
         }
         IDataSource dataSource = (IDataSource) source;
         IDataBinder dataBinder = dataSource.getDataBinder();
-        dataBinder.addWatcher(target);
-        dataSourceSet.add(dataSource);
+        IWatcherTarget watcherTarget = (IWatcherTarget) target;
+        IWatcherProxy watcherProxy = watcherTarget.getWatcherProxy();
+        dataBinder.addWatcher(watcherProxy);
+        sDataSourceSet.add(dataSource);
     }
 
     public static void unbind(Object target, Object source) {
-        if (!checkTarget(target) || !checkSource(source)) {
+        if (targetIllegal(target) || sourceIllegal(source)) {
             return;
         }
         IDataSource dataSource = (IDataSource) source;
         IDataBinder dataBinder = dataSource.getDataBinder();
-        dataBinder.removeWatcher(target);
+        IWatcherTarget watcherTarget = (IWatcherTarget) target;
+        IWatcherProxy watcherProxy = watcherTarget.getWatcherProxy();
+        dataBinder.removeWatcher(watcherProxy);
         if (!dataBinder.hasWatcher()) {
-            dataSourceSet.remove(dataSource);
+            sDataSourceSet.remove(dataSource);
         }
     }
 
     public static void unbindAll(Object target) {
-        if (!checkTarget(target)) {
+        if (targetIllegal(target)) {
             return;
         }
-        Iterator<IDataSource> iterator = dataSourceSet.iterator();
+        Iterator<IDataSource> iterator = sDataSourceSet.iterator();
         while (iterator.hasNext()) {
-            IDataSource dataSource = iterator.next();
-            IDataBinder dataBinder = dataSource.getDataBinder();
-            dataBinder.removeWatcher(target);
+            IDataBinder dataBinder = iterator.next().getDataBinder();
+            IWatcherTarget watcherTarget = (IWatcherTarget) target;
+            IWatcherProxy watcherProxy = watcherTarget.getWatcherProxy();
+            dataBinder.removeWatcher(watcherProxy);
             if (!dataBinder.hasWatcher()) {
                 iterator.remove();
             }
@@ -64,29 +73,41 @@ public class DataWatcher {
     }
 
     public static void clear() {
-        for(IDataSource dataSource : dataSourceSet) {
+        for(IDataSource dataSource : sDataSourceSet) {
             dataSource.getDataBinder().clearWatcher();
         }
-        dataSourceSet.clear();
+        sDataSourceSet.clear();
     }
 
-    private static boolean checkTarget(Object target) {
-        if (target == null) {
-            return false;
+    public static void setConfig(Config config) {
+        if (config == null) {
+            sConfig = new Config();
+        } else {
+            sConfig = config;
         }
-        return true;
     }
 
-    private static boolean checkSource(Object source) {
-        if (source == null) {
-            return false;
+    public static Config getConfig() {
+        return sConfig;
+    }
+
+    private static boolean targetIllegal(Object target) {
+        if (!(target instanceof IWatcherTarget)) {
+            return true;
         }
+        if (((IWatcherTarget) target).getWatcherProxy() == null) {
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean sourceIllegal(Object source) {
         if (!(source instanceof IDataSource)) {
-            return false;
+            return true;
         }
         if (((IDataSource) source).getDataBinder() == null) {
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 }

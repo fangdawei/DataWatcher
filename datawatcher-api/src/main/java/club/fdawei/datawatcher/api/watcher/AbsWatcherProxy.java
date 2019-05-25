@@ -4,7 +4,7 @@ package club.fdawei.datawatcher.api.watcher;
 import android.support.annotation.Nullable;
 
 import java.lang.ref.WeakReference;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -13,11 +13,10 @@ import java.util.Map;
 public abstract class AbsWatcherProxy<TARGET> implements IWatcherProxy {
 
     private WeakReference<TARGET> targetRef;
-    private final Map<String, List<WatcherNotifyPublisher>> publisherMap = new HashMap<>();
+    private final Map<Class<?>, Map<String, List<WatcherNotifyPublisher>>> publisherMap = new LinkedHashMap<>();
 
     public AbsWatcherProxy(TARGET target) {
         this.targetRef = new WeakReference<>(target);
-        initBindKeys();
         initPublishers();
     }
 
@@ -26,77 +25,73 @@ public abstract class AbsWatcherProxy<TARGET> implements IWatcherProxy {
         return targetRef.get();
     }
 
-    protected abstract void initBindKeys();
-
     protected abstract void initPublishers();
 
-    protected void registerPublisher(String fieldKey, WatcherNotifyPublisher publisher) {
-        if (fieldKey == null || fieldKey.isEmpty()) {
+    protected void registerPublisher(Class<?> clz, String field, WatcherNotifyPublisher publisher) {
+        if (field == null || field.isEmpty() || publisher == null) {
             return;
         }
-        if (publisher == null) {
-            return;
+        Map<String, List<WatcherNotifyPublisher>> fieldPublisherMap = publisherMap.get(clz);
+        if (fieldPublisherMap == null) {
+            fieldPublisherMap = new LinkedHashMap<>();
+            publisherMap.put(clz, fieldPublisherMap);
         }
-        List<WatcherNotifyPublisher> publisherList = publisherMap.get(fieldKey);
+        List<WatcherNotifyPublisher> publisherList = fieldPublisherMap.get(field);
         if (publisherList == null) {
             publisherList = new LinkedList<>();
-            publisherMap.put(fieldKey, publisherList);
+            fieldPublisherMap.put(field, publisherList);
         }
         publisherList.add(publisher);
     }
 
     @Override
-    public void onDataChanged(Object source, String fieldKey, Object oldValue, Object newValue) {
+    public void onDataChange(Object source, String fieldKey, Object oldValue, Object newValue) {
         dispatchDataChange(source, fieldKey, oldValue, newValue);
     }
 
     @Override
-    public void onDataBind(Object source, String fieldKey, Object value) {
-        dispatchDataBind(source, fieldKey, value);
+    public void onBindData(Object source, String field, Object value) {
+        dispatchBindData(source, field, value);
     }
 
-    private void dispatchDataChange(Object source, String fieldKey, Object oldValue, Object newValue) {
+    private void dispatchDataChange(Object source, String field, Object oldValue, Object newValue) {
         if (!isTargetAlive()) {
             return;
         }
-        List<WatcherNotifyPublisher> publisherList = publisherMap.get(fieldKey);
-        if (publisherList != null) {
-            for (WatcherNotifyPublisher publisher : publisherList) {
-                publisher.notifyWatcher(source, oldValue, newValue);
+        List<WatcherNotifyPublisher> publisherList = findPublishers(source, field);
+        if (publisherList == null) {
+            return;
+        }
+        for (WatcherNotifyPublisher publisher : publisherList) {
+            publisher.notifyWatcher(source, oldValue, newValue);
+        }
+    }
+
+    private void dispatchBindData(Object source, String field, Object value) {
+        if (!isTargetAlive()) {
+            return;
+        }
+        List<WatcherNotifyPublisher> publisherList = findPublishers(source, field);
+        if (publisherList == null) {
+            return;
+        }
+        for (WatcherNotifyPublisher publisher : publisherList) {
+            if (publisher.isNeedNotifyWhenBind()) {
+                publisher.notifyWatcher(source, null, value);
             }
         }
     }
 
-    private void dispatchDataBind(Object source, String fieldKey, Object value) {
-        List<WatcherNotifyPublisher> publisherList = publisherMap.get(fieldKey);
-        if (publisherList != null) {
-            for (WatcherNotifyPublisher publisher : publisherList) {
-                if (publisher.isNeedNotifyWhenBind()) {
-                    publisher.notifyWatcher(source, null, value);
-                }
-            }
+    private List<WatcherNotifyPublisher> findPublishers(Object source, String field) {
+        Map<String, List<WatcherNotifyPublisher>> fieldPublisherMap = publisherMap.get(source.getClass());
+        if (fieldPublisherMap == null) {
+            return null;
         }
-    }
-
-    @Override
-    public boolean isBlongTarget(Object target) {
-        if (targetRef.get() == null) {
-            return false;
-        }
-        return targetRef.get() == target;
+        return fieldPublisherMap.get(field);
     }
 
     @Override
     public boolean isTargetAlive() {
         return targetRef.get() != null;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof AbsWatcherProxy) {
-            return this.targetRef.get() == ((AbsWatcherProxy) obj).targetRef.get();
-        } else {
-            return false;
-        }
     }
 }

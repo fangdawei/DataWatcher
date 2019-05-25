@@ -5,7 +5,6 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import club.fdawei.datawatcher.api.watcher.IWatcherProxy;
-import club.fdawei.datawatcher.api.watcher.WatcherProxyFactory;
 
 public class DataBinder implements IDataBinder {
 
@@ -17,16 +16,16 @@ public class DataBinder implements IDataBinder {
     }
 
     @Override
-    public void onDataChanged(String fieldKey, Object oldValue, Object newValue) {
+    public void onDataChanged(String field, Object oldValue, Object newValue) {
         if (!isValueChanged(oldValue, newValue)) {
             return;
         }
-        notifyWatcher(fieldKey, oldValue, newValue);
+        notifyWatcher(field, oldValue, newValue);
     }
 
-    private void notifyWatcher(String fieldKey, Object oldValue, Object newValue) {
+    private void notifyWatcher(String field, Object oldValue, Object newValue) {
         for (IWatcherProxy watcher : watcherSet) {
-            watcher.onDataChanged(source, fieldKey, oldValue, newValue);
+            watcher.onDataChange(source, field, oldValue, newValue);
         }
     }
 
@@ -36,16 +35,12 @@ public class DataBinder implements IDataBinder {
             return;
         }
         for (Map.Entry<String, Object> fieldEntry : allFieldValueMap.entrySet()) {
-            watcher.onDataBind(source, fieldEntry.getKey(), fieldEntry.getValue());
+            watcher.onBindData(source, fieldEntry.getKey(), fieldEntry.getValue());
         }
     }
 
     @Override
-    public void addWatcher(Object target) {
-        if (target == null) {
-            return;
-        }
-        IWatcherProxy watcher = WatcherProxyFactory.createWatcherProxy(target);
+    public void addWatcher(IWatcherProxy watcher) {
         if (watcher == null) {
             return;
         }
@@ -55,12 +50,12 @@ public class DataBinder implements IDataBinder {
     }
 
     @Override
-    public void removeWatcher(Object target) {
-        if (target == null) {
+    public void removeWatcher(IWatcherProxy watcher) {
+        if (watcher == null) {
             return;
         }
         for(IWatcherProxy watcherProxy : watcherSet) {
-            if (watcherProxy.isBlongTarget(target)) {
+            if (watcher == watcherProxy) {
                 watcherSet.remove(watcherProxy);
             } else if (!watcherProxy.isTargetAlive()) {
                 watcherSet.remove(watcherProxy);

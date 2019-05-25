@@ -1,18 +1,16 @@
 package club.fdawei.datawatcher.processor;
 
-import club.fdawei.datawatcher.annotation.DataSource;
-import club.fdawei.datawatcher.annotation.DataWatch;
-import club.fdawei.datawatcher.annotation.WatchInherit;
-import club.fdawei.datawatcher.processor.common.CommonTag;
-import club.fdawei.datawatcher.processor.common.UtilProvider;
-import club.fdawei.datawatcher.processor.log.Logger;
-import club.fdawei.datawatcher.processor.source.DataFieldsGenerator;
-import club.fdawei.datawatcher.processor.watcher.WatcherProxyGenerator;
-
 import com.google.auto.service.AutoService;
 import com.sun.source.util.Trees;
 
-import javax.annotation.processing.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Filer;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.Processor;
+import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -20,8 +18,15 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-import java.util.LinkedHashSet;
-import java.util.Set;
+
+import club.fdawei.datawatcher.annotation.DataSource;
+import club.fdawei.datawatcher.annotation.WatchData;
+import club.fdawei.datawatcher.annotation.WatchInherit;
+import club.fdawei.datawatcher.processor.common.CommonTag;
+import club.fdawei.datawatcher.processor.common.UtilProvider;
+import club.fdawei.datawatcher.processor.log.Logger;
+import club.fdawei.datawatcher.processor.source.DataFieldsGenerator;
+import club.fdawei.datawatcher.processor.watcher.WatcherProxyGenerator;
 
 @AutoService(Processor.class)
 public class DataWatcherProcessor extends AbstractProcessor {
@@ -72,7 +77,7 @@ public class DataWatcherProcessor extends AbstractProcessor {
     public Set<String> getSupportedAnnotationTypes() {
         Set<String> types = new LinkedHashSet<>();
         types.add(DataSource.class.getCanonicalName());
-        types.add(DataWatch.class.getCanonicalName());
+        types.add(WatchData.class.getCanonicalName());
         types.add(WatchInherit.class.getCanonicalName());
         return types;
     }
@@ -88,7 +93,7 @@ public class DataWatcherProcessor extends AbstractProcessor {
         dataFieldsGenerator.genJavaFile(mFiler);
         dataFieldsGenerator.clear();
 
-        collectDataWatch(roundEnvironment);
+        collectWatchData(roundEnvironment);
         collectWatchInherit(roundEnvironment);
         watcherProxyGenerator.genJavaFile(mFiler);
         watcherProxyGenerator.clear();
@@ -111,14 +116,14 @@ public class DataWatcherProcessor extends AbstractProcessor {
         }
     }
 
-    private void collectDataWatch(RoundEnvironment roundEnvironment) {
-        Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(DataWatch.class);
+    private void collectWatchData(RoundEnvironment roundEnvironment) {
+        Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(WatchData.class);
         if (elements == null) {
             return;
         }
         for (Element element : elements) {
             if (element.getKind() != ElementKind.METHOD) {
-                mLogger.logw(TAG, "Only method can be annotated with @%s", DataWatch.class.getSimpleName());
+                mLogger.logw(TAG, "Only method can be annotated with @%s", WatchData.class.getSimpleName());
                 continue;
             }
             ExecutableElement executableElement = (ExecutableElement) element;

@@ -1,29 +1,36 @@
 package club.fdawei.datawatcher.plugin
 
-import club.fdawei.datawatcher.plugin.common.ClassInfoBox
-import club.fdawei.datawatcher.plugin.injector.DataWatcherInjector
-import club.fdawei.datawatcher.plugin.injector.InjectClassInfo
+import club.fdawei.datawatcher.plugin.injector.IInjector
+import club.fdawei.datawatcher.plugin.injector.InjectEntityInfo
 import club.fdawei.datawatcher.plugin.injector.InjectInfo
+import club.fdawei.datawatcher.plugin.injector.InjectorImpl
 import club.fdawei.datawatcher.plugin.log.PluginLogger
+import club.fdawei.datawatcher.plugin.util.InjectUtils
 import club.fdawei.datawatcher.plugin.util.JarUtils
 import com.android.build.api.transform.*
 import com.android.ide.common.internal.WaitableExecutor
 import com.android.utils.FileUtils
 import org.apache.commons.codec.digest.DigestUtils
 
-import java.util.jar.JarFile
-
 class TransformHandler {
 
     private static final String TAG = 'TransformHandler'
 
-    private final DataWatcherInjector dataWatcherInjector = new DataWatcherInjector()
+    private final IInjector injector = new InjectorImpl()
     private final List<String> classPathList = new LinkedList<>()
+    private final List<String> baseClassPathList = new LinkedList<>()
     private final List<InjectInfo> injectInfoList = new LinkedList<>()
     private TransformInvocation transformInvocation
 
     TransformHandler(TransformInvocation transformInvocation) {
         this.transformInvocation = transformInvocation
+    }
+
+    void addBaseClassPath(String path) {
+        if (path == null || path.isEmpty()) {
+            return
+        }
+        baseClassPathList.add(path)
     }
 
     private void syncAddClassPath(String path) {
@@ -43,6 +50,7 @@ class TransformHandler {
         def startTimeMillis = System.currentTimeMillis()
         injectInfoList.clear()
         classPathList.clear()
+        classPathList.addAll(baseClassPathList)
         if (!transformInvocation.incremental) {
             transformInvocation.outputProvider.deleteAll()
         }
@@ -63,50 +71,27 @@ class TransformHandler {
                 }
         }
         checkExecutor.waitForTasksWithQuickFail(true)
-        dataWatcherInjector.addClassPath(classPathList)
+        injector.addClassPath(classPathList)
         final WaitableExecutor injectExecutor = WaitableExecutor.useGlobalSharedThreadPool()
         injectInfoList.each {
             injectInfo ->
                 PluginLogger.i(TAG, "handle ${injectInfo}")
                 injectExecutor.execute {
-                    handleInject(injectInfo)
+                    injector.inject(injectInfo)
+                    onAfterInject(injectInfo)
                 }
         }
         injectExecutor.waitForTasksWithQuickFail(true)
-        dataWatcherInjector.clear()
+        injector.clear()
         def endTimeMillis = System.currentTimeMillis()
         PluginLogger.i(TAG, "transform end, cost time %.3fs", (endTimeMillis - startTimeMillis) / 1000f)
-    }
-
-    private void handleInject(InjectInfo injectInfo) {
-        dataWatcherInjector.inject(injectInfo)
-        switch (injectInfo.type) {
-            case InjectInfo.Type.DIR:
-                FileUtils.copyDirectory(injectInfo.sourceDir, injectInfo.destFile)
-                break
-            case InjectInfo.Type.JAR:
-                JarUtils.zipJarFile(injectInfo.sourceDir.absolutePath, injectInfo.destFile.absolutePath)
-                break
-            case InjectInfo.Type.FILE_LIST:
-                if (injectInfo.classInfoList != null) {
-                    injectInfo.classInfoList.each {
-                        def sourceFile = new File(injectInfo.sourceDir, it.name)
-                        def destFile = new File(injectInfo.destFile, it.name)
-                        if (destFile.exists()) {
-                            destFile.delete()
-                        }
-                        FileUtils.copyFile(sourceFile, destFile)
-                    }
-                }
-                break
-        }
     }
 
     private void handleDir(DirectoryInput dirInput) {
         syncAddClassPath(dirInput.file.absolutePath)
         def destDir = transformInvocation.outputProvider.getContentLocation(dirInput.name, dirInput.contentTypes, dirInput.scopes, Format.DIRECTORY)
         if (transformInvocation.incremental) {
-            List<InjectClassInfo> classInfoList = new LinkedList<>()
+            List<InjectEntityInfo> injectEntityList = new LinkedList<>()
             def changedFileMap = dirInput.getChangedFiles()
             changedFileMap.entrySet().each {
                 entry ->
@@ -115,9 +100,9 @@ class TransformHandler {
                     switch (entry.value) {
                         case Status.ADDED:
                         case Status.CHANGED:
-                            def injectClassInfo = findClassNeedInjectFromClass(file, dirInput.file)
-                            if (injectClassInfo != null) {
-                                classInfoList.add(injectClassInfo)
+                            def injectEntity = InjectUtils.collectFromClassFile(file, dirInput.file)
+                            if (injectEntity != null) {
+                                injectEntityList.add(injectEntity)
                             } else {
                                 FileUtils.copyFile(file, destFile)
                             }
@@ -127,16 +112,16 @@ class TransformHandler {
                             break
                     }
             }
-            if (classInfoList.size() > 0) {
+            if (injectEntityList.size() > 0) {
                 def injectInfo = new InjectInfo(dirInput.file, destDir, InjectInfo.Type.FILE_LIST)
-                injectInfo.setClassInfoList(classInfoList)
+                injectInfo.setEntityList(injectEntityList)
                 syncAddInjectInfo(injectInfo)
             }
         } else {
-            List<InjectClassInfo> classInfoList = findClassNeedInjectFromDir(dirInput.file)
-            if (classInfoList != null && classInfoList.size() > 0) {
+            List<InjectEntityInfo> injectEntityList = InjectUtils.collectFromDir(dirInput.file)
+            if (injectEntityList != null && injectEntityList.size() > 0) {
                 def injectInfo = new InjectInfo(dirInput.file, destDir, InjectInfo.Type.DIR)
-                injectInfo.setClassInfoList(classInfoList)
+                injectInfo.setEntityList(injectEntityList)
                 syncAddInjectInfo(injectInfo)
             } else {
                 FileUtils.copyDirectory(dirInput.file, destDir)
@@ -151,7 +136,7 @@ class TransformHandler {
             switch (jarInput.status) {
                 case Status.ADDED:
                 case Status.CHANGED:
-                    handleNeedCheckJar(jarInput, dest)
+                    handleChangedJar(jarInput, dest)
                     break
                 case Status.REMOVED:
                     FileUtils.deleteIfExists(dest)
@@ -161,18 +146,18 @@ class TransformHandler {
                     break
             }
         } else {
-            handleNeedCheckJar(jarInput, dest)
+            handleChangedJar(jarInput, dest)
         }
     }
 
-    private void handleNeedCheckJar(JarInput jarInput, File dest) {
-        def classInfoList = findClassNeedInjectFromJar(jarInput.file.absolutePath)
-        if (classInfoList != null && classInfoList.size() > 0) {
+    private void handleChangedJar(JarInput jarInput, File dest) {
+        def injectEntityList = InjectUtils.collectFromJar(jarInput.file.absolutePath)
+        if (injectEntityList != null && injectEntityList.size() > 0) {
             def tmpDir = new File(transformInvocation.getContext().temporaryDir, DigestUtils.md2Hex(jarInput.file.absolutePath))
             JarUtils.unzipJarFile(jarInput.file.absolutePath, tmpDir.absolutePath)
             syncAddClassPath(tmpDir.absolutePath)
             def injectInfo = new InjectInfo(tmpDir, dest, InjectInfo.Type.JAR)
-            injectInfo.setClassInfoList(classInfoList)
+            injectInfo.setEntityList(injectEntityList)
             syncAddInjectInfo(injectInfo)
         } else {
             syncAddClassPath(jarInput.file.absolutePath)
@@ -180,44 +165,26 @@ class TransformHandler {
         }
     }
 
-    private static InjectClassInfo findClassNeedInjectFromClass(File classFile, File dir) {
-        if (ClassInfoBox.DataFields.isDataFields(classFile.name)) {
-            return new InjectClassInfo(FileUtils.relativePath(classFile, dir), InjectClassInfo.Type.DATA_FIELDS)
-        }
-        return null
-    }
-
-    private static List<InjectClassInfo> findClassNeedInjectFromDir(File dir) {
-        final List<InjectClassInfo> classInfoList = new LinkedList<>()
-        if (dir.exists()) {
-            dir.eachFileRecurse {
-                file ->
-                    if (file.directory) {
-                        return
+    private void onAfterInject(InjectInfo injectInfo) {
+        switch (injectInfo.type) {
+            case InjectInfo.Type.DIR:
+                FileUtils.copyDirectory(injectInfo.sourceDir, injectInfo.destFile)
+                break
+            case InjectInfo.Type.JAR:
+                JarUtils.zipJarFile(injectInfo.sourceDir.absolutePath, injectInfo.destFile.absolutePath)
+                break
+            case InjectInfo.Type.FILE_LIST:
+                if (injectInfo.entityList != null) {
+                    injectInfo.entityList.each {
+                        def sourceFile = new File(injectInfo.sourceDir, it.name)
+                        def destFile = new File(injectInfo.destFile, it.name)
+                        if (destFile.exists()) {
+                            destFile.delete()
+                        }
+                        FileUtils.copyFile(sourceFile, destFile)
                     }
-                    if (ClassInfoBox.DataFields.isDataFields(file.name)) {
-                        def classInfo = new InjectClassInfo(FileUtils.relativePath(file, dir), InjectClassInfo.Type.DATA_FIELDS)
-                        classInfoList.add(classInfo)
-                    }
-            }
+                }
+                break
         }
-        return classInfoList
-    }
-
-    private static List<InjectClassInfo> findClassNeedInjectFromJar(String jarPath) {
-        def jarFile = new JarFile(jarPath)
-        def entries = jarFile.entries()
-        final List<InjectClassInfo> classInfoList = new LinkedList<>()
-        while (entries.hasMoreElements()) {
-            def jarEntry = entries.nextElement()
-            if (jarEntry.isDirectory()) {
-                continue
-            }
-            if (ClassInfoBox.DataFields.isDataFields(jarEntry.name)) {
-                def classInfo = new InjectClassInfo(jarEntry.name, InjectClassInfo.Type.DATA_FIELDS)
-                classInfoList.add(classInfo)
-            }
-        }
-        return classInfoList
     }
 }
