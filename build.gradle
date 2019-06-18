@@ -14,7 +14,7 @@ buildscript {
 
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
 
-        classpath 'com.novoda:bintray-release:0.9'
+        classpath "com.novoda:bintray-release:$bintray_version"
 
         def localRepoDir = new File(rootProject.localRepoPath)
         if (localRepoDir.exists()) {
