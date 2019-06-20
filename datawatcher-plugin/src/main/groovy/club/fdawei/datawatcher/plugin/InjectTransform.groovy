@@ -9,19 +9,19 @@ import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.internal.pipeline.TransformManager
 import org.gradle.api.Project
 
-class DataWatcherTransform extends Transform {
+class InjectTransform extends Transform {
 
-    private static final String TAG = "DataWatcherTransform"
+    private static final String TAG = "InjectTransform"
 
     private Project project
 
-    DataWatcherTransform(Project project) {
+    InjectTransform(Project project) {
         this.project = project
     }
 
     @Override
     String getName() {
-        return "DataWatcherTransform"
+        return "injectSource&Watcher"
     }
 
     @Override

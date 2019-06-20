@@ -15,6 +15,12 @@ final class ClassBox {
         }
 
         static final String ANNO_TYPE_NAME = 'club.fdawei.datawatcher.annotation.DataFields'
+
+        static String getPathFromSource(File sourceFile) {
+            def parent = sourceFile.parent
+            def parentPath = parent != null ? parent : ""
+            return "${parentPath}${File.separator}${NAME_PREFIX}${sourceFile.name}"
+        }
     }
 
     static final class WatcherProxy {
@@ -26,6 +32,10 @@ final class ClassBox {
         }
 
         static final String ANNO_TYPE_NAME = 'club.fdawei.datawatcher.annotation.WatcherProxy'
+
+        static String getPathFromTarget(File targetFile) {
+            return targetFile.absolutePath.replace('$', '_').concat(NAME_SUFFIX)
+        }
     }
 
     static final class IDataSource {

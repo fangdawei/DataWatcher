@@ -69,6 +69,7 @@ public class DataFieldsGenerator extends JavaClassGenerator {
                     .build();
             try {
                 javaFile.writeTo(filer);
+                logi(TAG, "gen %s.%s", pkgName, classSimpleName);
             } catch (IOException e) {
                 loge(TAG, "gen error %s.%s, %s", pkgName, classSimpleName, e.getMessage());
             }

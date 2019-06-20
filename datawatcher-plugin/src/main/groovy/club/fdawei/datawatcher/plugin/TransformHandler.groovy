@@ -1,7 +1,7 @@
 package club.fdawei.datawatcher.plugin
 
 import club.fdawei.datawatcher.plugin.injector.IInjector
-import club.fdawei.datawatcher.plugin.injector.InjectEntityInfo
+import club.fdawei.datawatcher.plugin.injector.InjectEntity
 import club.fdawei.datawatcher.plugin.injector.InjectInfo
 import club.fdawei.datawatcher.plugin.injector.InjectorImpl
 import club.fdawei.datawatcher.plugin.log.PluginLogger
@@ -89,39 +89,40 @@ class TransformHandler {
 
     private void handleDir(DirectoryInput dirInput) {
         syncAddClassPath(dirInput.file.absolutePath)
-        def destDir = transformInvocation.outputProvider.getContentLocation(dirInput.name, dirInput.contentTypes, dirInput.scopes, Format.DIRECTORY)
+        def destDir = transformInvocation.outputProvider.getContentLocation(dirInput.name,
+                dirInput.contentTypes, dirInput.scopes, Format.DIRECTORY)
         if (transformInvocation.incremental) {
-            List<InjectEntityInfo> injectEntityList = new LinkedList<>()
+            List<InjectEntity> injectEntityList = new LinkedList<>()
             def changedFileMap = dirInput.getChangedFiles()
             changedFileMap.entrySet().each {
                 entry ->
-                    def file = entry.key
-                    def destFile = new File(file.absolutePath.replace(dirInput.file.absolutePath, destDir.absolutePath))
+                    def destFile = new File(entry.key.absolutePath.replace(dirInput.file.absolutePath,
+                            destDir.absolutePath))
                     switch (entry.value) {
                         case Status.ADDED:
                         case Status.CHANGED:
-                            def injectEntity = InjectUtils.collectFromClassFile(file, dirInput.file)
+                            def injectEntity = InjectUtils.collectFromClassFile(entry.key, dirInput.file)
                             if (injectEntity != null) {
                                 injectEntityList.add(injectEntity)
                             } else {
-                                FileUtils.copyFile(file, destFile)
+                                FileUtils.copyFile(entry.key, destFile)
                             }
                             break
                         case Status.REMOVED:
-                            FileUtils.deletePath(destFile)
+                            FileUtils.deleteIfExists(destFile)
                             break
                     }
             }
             if (injectEntityList.size() > 0) {
                 def injectInfo = new InjectInfo(dirInput.file, destDir, InjectInfo.Type.FILE_LIST)
-                injectInfo.setEntityList(injectEntityList)
+                injectInfo.setEntities(injectEntityList)
                 syncAddInjectInfo(injectInfo)
             }
         } else {
-            List<InjectEntityInfo> injectEntityList = InjectUtils.collectFromDir(dirInput.file)
+            List<InjectEntity> injectEntityList = InjectUtils.collectFromDir(dirInput.file)
             if (injectEntityList != null && injectEntityList.size() > 0) {
                 def injectInfo = new InjectInfo(dirInput.file, destDir, InjectInfo.Type.DIR)
-                injectInfo.setEntityList(injectEntityList)
+                injectInfo.setEntities(injectEntityList)
                 syncAddInjectInfo(injectInfo)
             } else {
                 FileUtils.copyDirectory(dirInput.file, destDir)
@@ -131,7 +132,8 @@ class TransformHandler {
 
     private void handleJar(JarInput jarInput) {
         def jarDestName = DigestUtils.md2Hex(jarInput.file.absolutePath).concat('.jar')
-        def dest = transformInvocation.outputProvider.getContentLocation(jarDestName, jarInput.contentTypes, jarInput.scopes, Format.JAR)
+        def dest = transformInvocation.outputProvider.getContentLocation(jarDestName,
+                jarInput.contentTypes, jarInput.scopes, Format.JAR)
         if (transformInvocation.incremental) {
             switch (jarInput.status) {
                 case Status.ADDED:
@@ -153,11 +155,12 @@ class TransformHandler {
     private void handleChangedJar(JarInput jarInput, File dest) {
         def injectEntityList = InjectUtils.collectFromJar(jarInput.file.absolutePath)
         if (injectEntityList != null && injectEntityList.size() > 0) {
-            def tmpDir = new File(transformInvocation.getContext().temporaryDir, DigestUtils.md2Hex(jarInput.file.absolutePath))
+            def tmpDir = new File(transformInvocation.getContext().temporaryDir,
+                    DigestUtils.md2Hex(jarInput.file.absolutePath))
             JarUtils.unzipJarFile(jarInput.file.absolutePath, tmpDir.absolutePath)
             syncAddClassPath(tmpDir.absolutePath)
             def injectInfo = new InjectInfo(tmpDir, dest, InjectInfo.Type.JAR)
-            injectInfo.setEntityList(injectEntityList)
+            injectInfo.setEntities(injectEntityList)
             syncAddInjectInfo(injectInfo)
         } else {
             syncAddClassPath(jarInput.file.absolutePath)
@@ -174,15 +177,13 @@ class TransformHandler {
                 JarUtils.zipJarFile(injectInfo.sourceDir.absolutePath, injectInfo.destFile.absolutePath)
                 break
             case InjectInfo.Type.FILE_LIST:
-                if (injectInfo.entityList != null) {
-                    injectInfo.entityList.each {
-                        def sourceFile = new File(injectInfo.sourceDir, it.name)
-                        def destFile = new File(injectInfo.destFile, it.name)
-                        if (destFile.exists()) {
-                            destFile.delete()
-                        }
-                        FileUtils.copyFile(sourceFile, destFile)
+                injectInfo.entities.each {
+                    def sourceFile = new File(injectInfo.sourceDir, it.name)
+                    def destFile = new File(injectInfo.destFile, it.name)
+                    if (destFile.exists()) {
+                        destFile.delete()
                     }
+                    FileUtils.copyFile(sourceFile, destFile)
                 }
                 break
         }

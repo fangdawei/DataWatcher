@@ -4,9 +4,9 @@ package club.fdawei.datawatcher.plugin.injector
 class InjectInfo {
 
     private File sourceDir
-    private List<InjectEntityInfo> entityList
     private File destFile
     private Type type
+    private Set<InjectEntity> entitySet = new LinkedHashSet<>()
 
     InjectInfo(File sourceDir, File destFile, Type type) {
         this.sourceDir = sourceDir
@@ -14,16 +14,17 @@ class InjectInfo {
         this.type = type
     }
 
-    void setEntityList(List<InjectEntityInfo> list) {
-        this.entityList = list
+    void setEntities(List<InjectEntity> list) {
+        this.entitySet.clear()
+        this.entitySet.addAll(list)
     }
 
     File getSourceDir() {
         return sourceDir
     }
 
-    List<InjectEntityInfo> getEntityList() {
-        return entityList
+    Collection<InjectEntity> getEntities() {
+        return entitySet
     }
 
     File getDestFile() {
@@ -36,12 +37,17 @@ class InjectInfo {
 
     @Override
     String toString() {
-        return "InjectInfo{" +
+        def builder = new StringBuilder()
+        builder.append("InjectInfo{" +
                 "sourceDir=" + sourceDir +
-                ", entityList size=" + (entityList == null ? 0 : entityList.size()) +
+                ", entities size=" + entitySet.size() +
                 ", type=" + type +
                 ", destFile=" + destFile.absolutePath +
-                '}'
+                '}')
+        entitySet.each {
+            builder.append("\n${it}")
+        }
+        return builder.toString()
     }
 
     enum Type {

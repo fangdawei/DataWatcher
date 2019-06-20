@@ -29,16 +29,13 @@ class InjectorImpl implements IInjector {
         if (!isInjectInfoValid(injectInfo)) {
             return
         }
-        if (injectInfo.entityList == null) {
-            return
-        }
-        injectInfo.entityList.each {
+        injectInfo.entities.each {
             def classFile = new File(injectInfo.sourceDir, it.name)
             switch (it.type) {
-                case InjectEntityInfo.Type.DATA_FIELDS:
+                case InjectEntity.Type.DATA_FIELDS:
                     dataHandler.handle(classFile, injectInfo.sourceDir)
                     break
-                case InjectEntityInfo.Type.WATCHER_PROXY:
+                case InjectEntity.Type.WATCHER_PROXY:
                     watcherHandler.handle(classFile, injectInfo.sourceDir)
                     break
             }

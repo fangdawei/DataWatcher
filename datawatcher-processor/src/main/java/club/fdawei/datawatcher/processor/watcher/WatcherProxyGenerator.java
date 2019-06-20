@@ -140,6 +140,7 @@ public class WatcherProxyGenerator extends JavaClassGenerator {
                     .build();
             try {
                 watcherProxyJavaFile.writeTo(filer);
+                logi(TAG, "gen %s.%s", pkgName, simpleName);
             } catch (IOException e) {
                 loge(TAG, "gen error %s.%s, %s", pkgName, simpleName, e.getMessage());
                 e.printStackTrace();
