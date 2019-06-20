@@ -89,7 +89,6 @@ public class DataWatcherProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
-        mLogger.logi(TAG, "DataWatcherProcessor process start");
         collectDataSource(roundEnvironment);
         dataFieldsGenerator.genJavaFile(mFiler);
         dataFieldsGenerator.clear();
@@ -98,7 +97,6 @@ public class DataWatcherProcessor extends AbstractProcessor {
         collectWatchInherit(roundEnvironment);
         watcherProxyGenerator.genJavaFile(mFiler);
         watcherProxyGenerator.clear();
-        mLogger.logi(TAG, "DataWatcherProcessor process end");
 
         return true;
     }
