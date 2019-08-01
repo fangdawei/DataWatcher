@@ -88,37 +88,42 @@ class TransformHandler {
     }
 
     private void handleDir(DirectoryInput dirInput) {
-        syncAddClassPath(dirInput.file.absolutePath)
         def destDir = transformInvocation.outputProvider.getContentLocation(dirInput.name,
                 dirInput.contentTypes, dirInput.scopes, Format.DIRECTORY)
         if (transformInvocation.incremental) {
-            List<InjectEntity> injectEntityList = new LinkedList<>()
-            def changedFileMap = dirInput.getChangedFiles()
-            changedFileMap.entrySet().each {
-                entry ->
-                    def destFile = new File(entry.key.absolutePath.replace(dirInput.file.absolutePath,
-                            destDir.absolutePath))
-                    switch (entry.value) {
-                        case Status.ADDED:
-                        case Status.CHANGED:
-                            def injectEntity = InjectUtils.collectFromClassFile(entry.key, dirInput.file)
-                            if (injectEntity != null) {
-                                injectEntityList.add(injectEntity)
-                            } else {
-                                FileUtils.copyFile(entry.key, destFile)
-                            }
-                            break
-                        case Status.REMOVED:
-                            FileUtils.deleteIfExists(destFile)
-                            break
-                    }
-            }
-            if (injectEntityList.size() > 0) {
-                def injectInfo = new InjectInfo(dirInput.file, destDir, InjectInfo.Type.FILE_LIST)
-                injectInfo.setEntities(injectEntityList)
-                syncAddInjectInfo(injectInfo)
+            if (dirInput.file.exists()) {
+                syncAddClassPath(dirInput.file.absolutePath)
+                List<InjectEntity> injectEntityList = new LinkedList<>()
+                def changedFileMap = dirInput.getChangedFiles()
+                changedFileMap.entrySet().each {
+                    entry ->
+                        def destFile = new File(entry.key.absolutePath.replace(dirInput.file.absolutePath,
+                                destDir.absolutePath))
+                        switch (entry.value) {
+                            case Status.ADDED:
+                            case Status.CHANGED:
+                                def injectEntity = InjectUtils.collectFromClassFile(entry.key, dirInput.file)
+                                if (injectEntity != null) {
+                                    injectEntityList.add(injectEntity)
+                                } else {
+                                    FileUtils.copyFile(entry.key, destFile)
+                                }
+                                break
+                            case Status.REMOVED:
+                                FileUtils.deleteIfExists(destFile)
+                                break
+                        }
+                }
+                if (injectEntityList.size() > 0) {
+                    def injectInfo = new InjectInfo(dirInput.file, destDir, InjectInfo.Type.FILE_LIST)
+                    injectInfo.setEntities(injectEntityList)
+                    syncAddInjectInfo(injectInfo)
+                }
+            } else {
+                FileUtils.deleteRecursivelyIfExists(destDir)
             }
         } else {
+            syncAddClassPath(dirInput.file.absolutePath)
             List<InjectEntity> injectEntityList = InjectUtils.collectFromDir(dirInput.file)
             if (injectEntityList != null && injectEntityList.size() > 0) {
                 def injectInfo = new InjectInfo(dirInput.file, destDir, InjectInfo.Type.DIR)

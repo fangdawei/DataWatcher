@@ -63,15 +63,15 @@ public class DataFieldsGenerator extends JavaClassGenerator {
     public void genJavaFile(Filer filer) {
         for (DataSourceClassInfo dataSourceClass : rootDataSourceMap.values()) {
             String pkgName = dataSourceClass.getPkgName();
-            String classSimpleName = dataSourceClass.getSimpleName();
+            String className = dataSourceClass.getDataFieldsName();
             JavaFile javaFile = JavaFile.builder(dataSourceClass.getPkgName(), dataSourceClass.buildTypeSpec())
                     .addFileComment("Generated automatically by DataWatcher. Do not modify!")
                     .build();
             try {
                 javaFile.writeTo(filer);
-                logi(TAG, "gen %s.%s", pkgName, classSimpleName);
+                logi(TAG, "gen %s.%s", pkgName, className);
             } catch (IOException e) {
-                loge(TAG, "gen error %s.%s, %s", pkgName, classSimpleName, e.getMessage());
+                loge(TAG, "gen error %s.%s, %s", pkgName, className, e.getMessage());
             }
         }
     }

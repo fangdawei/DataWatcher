@@ -44,6 +44,10 @@ public class DataSourceClassInfo extends AnnoWithClassInfo {
         return simpleName;
     }
 
+    public String getDataFieldsName() {
+        return ClassInfoBox.DataFields.NAME_PREFIX + simpleName;
+    }
+
     public void setTypeElement(TypeElement typeElement) {
         this.typeElement = typeElement;
     }
@@ -63,7 +67,7 @@ public class DataSourceClassInfo extends AnnoWithClassInfo {
     public TypeSpec buildTypeSpec() {
         TypeSpec.Builder classBuilder;
         if (isTopClass) {
-            classBuilder = TypeSpec.classBuilder(ClassInfoBox.DataFields.NAME_PREFIX + simpleName)
+            classBuilder = TypeSpec.classBuilder(getDataFieldsName())
                     .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
         } else {
             classBuilder = TypeSpec.classBuilder(simpleName)
