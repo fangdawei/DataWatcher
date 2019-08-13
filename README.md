@@ -51,7 +51,7 @@ dependencies {
 }
 ```
 
-如果使用Kotlin，用kapt代替annotationProcessor
+如果使用Kotlin，请用kapt代替annotationProcessor
 
 * 使用
 
@@ -104,7 +104,7 @@ public class UserInfo {
 
 通过 @FieldIgnore 可以指定需要忽略不监听的字段
 
-默认会自动查找数据源中的setter方法，设置 DataSource 中的 setterAutoFind = false 将禁用自动查找，此时可以通过 @FieldSetter 显示指定setter方法
+默认会自动查找数据源中的setter方法，设置 @DataSource 中的 setterAutoFind = false 将禁用自动查找，此时可以通过 @FieldSetter 显示指定setter方法
 
 监听数据变化
 
@@ -112,10 +112,12 @@ public class UserInfo {
 public class Observer {
 
     public void init(UserInfo userInfo) {
+        //bind数据，开始监听
         DataWatcher.bind(this, userInfo);
     }
 
     public void destroy() {
+        //unbind数据，停止监听
         DataWatcher.unbindAll(this);
     }
 
@@ -136,5 +138,5 @@ public class Observer {
 }
 ```
 
-WatchData 中的 thread 指定回调方法执行的线程，notifyWhenBind 指定是否需要在bind数据时立即回调监听方法
+@WatchData 中的 thread 指定回调方法执行的线程，notifyWhenBind 指定是否需要在bind数据时立即调用回调方法
 
