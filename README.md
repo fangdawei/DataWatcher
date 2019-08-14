@@ -41,7 +41,7 @@ dependencies {
 }
 ```
 
-其他Module的build.gradle中添加配置
+其他module的build.gradle中添加配置
 
 ```
 dependencies {
